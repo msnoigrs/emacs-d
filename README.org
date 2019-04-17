@@ -1,0 +1,14 @@
+#+TITLE: emacs-d
+#+AUTHOR: Masanao Igarashi
+#+EMAIL: syoux2@gmail.com
+#+DATE: 20190417
+#+DESCRIPTION: My init.el and other personal Emacs goodies
+#+OPTIONS: H:4 num:nil toc:nil ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: tex:t todo:t pri:nil tags:t texht:nil
+#+OPTIONS: author:nil creator:nil email:nil date:nil
+
+* emacs-d
+
+My init.el and other personal Emacs goodies.
+
+I don't use package.el and use portage on gentoo.
