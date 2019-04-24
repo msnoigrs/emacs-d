@@ -441,7 +441,7 @@ with external browser."
              (setq indent-tabs-mode nil)))
 
 (with-eval-after-load 'company
-  (setq company-auto-complete t)
+  ;(setq company-auto-complete nil)
   ;(setq company-transformers '(company-sort-by-backend-importance))
   (setq company-transformers '(company-sort-by-statistics))
   (setq company-idle-delay 0)
@@ -463,7 +463,8 @@ with external browser."
 
 (when (require 'lsp-mode nil t)
   (require 'lsp-clients)
-  (add-hook 'python-mode-hook 'lsp)
+  (add-hook 'python-mode-hook #'lsp)
+  (add-hook 'c++-mode-hook #'lsp)
   (when (require 'lsp-ui nil t)
     (add-hook 'lsp-mode-hook 'lsp-ui-mode))
   (when (require 'company nil t)
