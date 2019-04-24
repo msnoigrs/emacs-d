@@ -461,10 +461,18 @@ with external browser."
 (when (require 'company-statistics nil t)
   (company-statistics-mode))
 
+(when (require 'projectile nil t)
+  (setq projectile-enable-caching t)
+  (projectile-global-mode))
+
 (when (require 'lsp-mode nil t)
   (require 'lsp-clients)
   (add-hook 'python-mode-hook #'lsp)
+  (when (require 'ccls nil t)
+    (setq ccls-executable "/usr/bin/ccls"))
+  (add-hook 'c-mode-hook #'lsp)
   (add-hook 'c++-mode-hook #'lsp)
+  (add-hook 'objc-mode-hook #'lsp)
   (when (require 'lsp-ui nil t)
     (add-hook 'lsp-mode-hook 'lsp-ui-mode))
   (when (require 'company nil t)
