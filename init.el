@@ -648,7 +648,9 @@ with external browser."
 (global-set-key (kbd "M-;") 'comment-dwim-2)
 (setq comment-dwim-2--inline-comment-behavior 'reindent-comment)
 
-(electric-pair-mode t)
+(if (require 'smartparens nil t)
+    (smartparens-global-mode t)
+  (electric-pair-mode t))
 
 (show-paren-mode 1)
 
