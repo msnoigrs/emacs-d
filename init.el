@@ -643,9 +643,9 @@ with external browser."
 
 (defalias 'nau 'exec-filemanager)
 
-(require 'comment-dwim-2)
-(global-set-key (kbd "M-;") 'comment-dwim-2)
-(setq comment-dwim-2--inline-comment-behavior 'reindent-comment)
+(if (require 'comment-dwim-2 nil t)
+    (global-set-key (kbd "M-;") 'comment-dwim-2)
+  (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
 
 (if (require 'smartparens nil t)
     (smartparens-global-mode t)
