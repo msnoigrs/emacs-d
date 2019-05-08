@@ -103,7 +103,7 @@
 (setq org-table-automatic-realign t)
 (setq org-table-copy-increment t)
 
-(require 'org-bookmark)
+;;(require 'org-bookmark)
 
 ; org-agenda-custom-commands
 ;; http://skalldan.wordpress.com/2011/08/18/iphone-%E3%81%A7-org-capture/
