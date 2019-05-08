@@ -523,10 +523,10 @@ with external browser."
 (add-to-list 'interpreter-mode-alist '("runscript" . sh-mode))
 (modify-coding-system-alist 'file "\\.\\(ebuild\\|eclass\\)\\'" 'utf-8)
 
-(load "with-editor-autoloads")
-(load "ghub-autoloads")
-(load "magit-popup-autoloads")
-(load "magit-autoloads")
+;(load "with-editor-autoloads")
+;(load "ghub-autoloads")
+;(load "magit-popup-autoloads")
+;(load "magit-autoloads")
 
 (when (require 'git-gutter+ nil t)
  (global-git-gutter+-mode t)
