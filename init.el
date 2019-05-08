@@ -482,12 +482,11 @@ with external browser."
 (when (require 'go-mode nil t)
   (when (require 'lsp-mode nil t)
     (add-hook 'go-mode-hook #'lsp))
+  (define-key go-mode-map (kbd "C-c C-j") 'go-direx-pop-to-buffer)
   (add-hook 'go-mode-hook
             (lambda ()
               (setq indent-tabs-mode t)))
   (add-hook 'before-save-hook 'lsp-format-buffer))
-
-(define-key go-mode-map (kbd "C-c C-j") 'go-direx-pop-to-buffer)
 
 (when (require 'company-mode nil t)
   (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
