@@ -465,7 +465,12 @@ with external browser."
   (setq projectile-enable-caching t)
   (projectile-global-mode))
 
+(when (require 'google-c-style nil t)
+  (add-hook 'c-mode-hook 'google-set-c-style)
+  (add-hook 'c++-mode-hook 'google-set-c-style))
+
 (when (require 'lsp-mode nil t)
+  (setq lsp-enable-indentation nil)
   (require 'lsp-clients)
   (add-hook 'python-mode-hook #'lsp)
   (when (require 'ccls nil t)
@@ -486,7 +491,8 @@ with external browser."
   (add-hook 'go-mode-hook
             (lambda ()
               (setq indent-tabs-mode t)))
-  (add-hook 'before-save-hook 'lsp-format-buffer))
+  ;(add-hook 'before-save-hook 'lsp-format-buffer nil 't)
+  (add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
 
 (when (require 'company-mode nil t)
   (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
