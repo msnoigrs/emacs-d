@@ -120,8 +120,8 @@
 ;; tabグローバル設定
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-(setq-default judge-indent-default-indent-width 4
-	      judge-indent-default-tab-width 4)
+;(setq-default judge-indent-default-indent-width 4
+;	      judge-indent-default-tab-width 4)
 
 (defun eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -175,6 +175,36 @@ point reaches the beginning or end of the buffer, stop there."
   (if (not (eq major-mode 'mew-draft-mode))
       ;; delete-trailing-whitespace does not work in mew-draft-mode.
       (delete-trailing-whitespace)))
+
+(if (not (fboundp 'defun-if-undefined))
+    (defmacro defun-if-undefined (name &rest rest)
+      `(unless (fboundp (quote ,name))
+         (defun ,name ,@rest))))
+
+(defun-if-undefined inside-string-or-comment-p ()
+  (let ((state (parse-partial-sexp (point-min) (point))))
+    (or (nth 3 state) (nth 4 state))))
+
+(defun-if-undefined re-search-forward-without-string-and-comments (&rest args)
+  (let ((value (apply #'re-search-forward args)))
+    (if (and value (inside-string-or-comment-p))
+        (apply #'re-search-forward-without-string-and-comments args)
+      value)))
+
+(defun my-buffer-indent-tabs-code-p (&optional buffer)
+  "Check first indent char."
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer
+      (save-excursion
+        (save-restriction
+          (widen)
+          (goto-char (point-min))
+          (and (re-search-forward-without-string-and-comments "^[ \t]"
+                                                              (point-max) t)
+               (string= (match-string 0) "\t")))))))
+
+(defun my-set-indent-tabs-mode ()
+  (setq indent-tabs-mode (my-buffer-indent-tabs-code-p)))
 
 ;(require 'dropdown-list)
 
@@ -466,8 +496,14 @@ with external browser."
   (projectile-global-mode))
 
 (when (require 'google-c-style nil t)
-  (add-hook 'c-mode-hook 'google-set-c-style)
-  (add-hook 'c++-mode-hook 'google-set-c-style))
+  (defun cc-mode-init ()
+    (google-set-c-style))
+;;;;; clang-format -dump-config -style=Google > .clang-format
+;;;;; NamespaceIndentation: All
+;;;;; IndentWidth: 2
+;;;;; TabWidth: 2
+  (add-hook 'c-mode-hook 'cc-mode-init)
+  (add-hook 'c++-mode-hook 'cc-mode-init))
 
 (when (require 'lsp-mode nil t)
   (setq lsp-enable-indentation nil)
@@ -479,6 +515,13 @@ with external browser."
   (add-hook 'c++-mode-hook #'lsp)
   (add-hook 'objc-mode-hook #'lsp)
   (when (require 'lsp-ui nil t)
+    (setq lsp-ui-doc-header nil)
+    (setq lsp-ui-doc-border "violet")
+    (setq lsp-ui-sideline-update-mode 'point)
+    (setq lsp-ui-sideline-delay 1)
+    (setq lsp-ui-sideline-ignore-duplicate t)
+    (setq lsp-ui-peek-always-show t)
+    (setq lsp-ui-flycheck-enable t)
     (add-hook 'lsp-mode-hook 'lsp-ui-mode))
   (when (require 'company nil t)
     (when (require 'company-lsp nil t)
@@ -491,8 +534,8 @@ with external browser."
   (add-hook 'go-mode-hook
             (lambda ()
               (setq indent-tabs-mode t)))
-  ;(add-hook 'before-save-hook 'lsp-format-buffer nil 't)
-  (add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
+  (add-hook 'before-save-hook 'lsp-format-buffer nil 't))
+  ;(add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
 
 (when (require 'company-mode nil t)
   (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
