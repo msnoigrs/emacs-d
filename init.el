@@ -249,6 +249,9 @@ with external browser."
   (setq open-junk-file-format "~/orgdocs/%Y-%m%d-%H%M%S.")
   (global-set-key "\C-xj" 'open-junk-file))
 
+(when (require 'editorconfig nil t)
+  (editorconfig-mode 1))
+
 (require 'org)
 (load "my-org-settings" t)
 
