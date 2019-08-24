@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PKGS="
-async
+app-emacs/async
 comment-dwim2
 company-lsp
 company-mode
