@@ -7,6 +7,8 @@ company-lsp
 company-mode
 company-statistics
 dash
+posframe
+company-posframe
 desktop-file-utils
 direx-el
 dropdown-list
@@ -16,7 +18,7 @@ web-mode
 yaml-mode
 yasnippet
 yasnippet-snippets
-mozc-popup
+mozc-cand-posframe
 mozc-el-extensions
 smartparens
 spinner
@@ -36,7 +38,7 @@ f
 ht
 let-alist
 flycheck
-flycheck-pos-tip
+flycheck-posframe
 go-mode
 lsp-mode
 lsp-ui
@@ -49,5 +51,8 @@ git-modes
 magit
 git-gutter-plus
 editorconfig-emacs"
+
+#mozc-popup
+#flycheck-pos-tip
 
 emerge -1 ${PKGS}

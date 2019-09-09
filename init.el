@@ -70,16 +70,18 @@
     ;; Windows
     (setq default-frame-alist
 	  (append '((font . "MyricaM M-10")
-		    (height . 120) ; 4K panel
-		    (line-spacing . 0.15))
-		  default-frame-alist))
+                (height . 120) ; 4K panel
+                (line-spacing . 0.15))
+              default-frame-alist))
   ;; Windows以外
   (setq default-frame-alist
 	;; 全角と半角の表示幅の比率が正確に2:1になるのは
 	;; 10.5/12/13.5/15/18pt(1.5の倍数)
-	(append '((font . "MyricaM M-10.5")
-		  (height . 100)) ; 4K panel
-		default-frame-alist)))
+	;(append '((font . "M+ 1mn light-10.5")
+    ;(append '((font . "Source Han Mono-9.5")
+        (append '((font . "MyricaM M-10.5")
+                  (height . 100)) ; 4K panel
+                default-frame-alist)))
 
 ;;;; The lines above are basic settings.
 
@@ -104,9 +106,11 @@
 
 ;; mozc
 (when (require 'mozc nil t)
-  (if (require 'mozc-popup nil t)
-      (setq mozc-candidate-style 'popup)
-    (setq mozc-candidate-style 'overlay))
+  ;; (if (require 'mozc-popup nil t)
+  ;;     (setq mozc-candidate-style 'popup)
+  ;;   (setq mozc-candidate-style 'overlay))
+  (if (require 'mozc-posframe nil t)
+      (setq mozc-candidate-style 'posframe))
   (require 'mozc-isearch nil t)
   (require 'mozc-mode-line-indicator nil t)
   (setq default-input-method "japanese-mozc")
@@ -462,9 +466,11 @@ with external browser."
 ;; (setq jedi:complete-on-dot t)
 ;; (autoload 'jedi:setup "jedi" nil t)
 
-(when (require 'flycheck-pos-tip nil t)
-  (with-eval-after-load 'flycheck
-    (flycheck-pos-tip-mode)))
+;; (when (require 'flycheck-pos-tip nil t)
+;;   (with-eval-after-load 'flycheck
+;;     (flycheck-pos-tip-mode)))
+(when (require 'flycheck-posframe nil t)
+  (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
 
 (when (require 'flycheck nil t)
   (global-flycheck-mode))
@@ -493,6 +499,8 @@ with external browser."
   (global-company-mode))
 (when (require 'company-statistics nil t)
   (company-statistics-mode))
+(when (require 'company-posframe nil t)
+  (company-posframe-mode 1))
 
 (when (require 'projectile nil t)
   (setq projectile-enable-caching t)
