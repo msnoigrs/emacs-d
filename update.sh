@@ -50,7 +50,8 @@ ghub
 git-modes
 magit
 git-gutter-plus
-editorconfig-emacs"
+editorconfig-emacs
+google-translate"
 
 #mozc-popup
 #flycheck-pos-tip
