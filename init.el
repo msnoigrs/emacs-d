@@ -401,7 +401,7 @@ with external browser."
   ;; Re-initialize the image-file handler.
   (auto-image-file-mode t))
 
-(load "view-mode-key" t)
+;(load "view-mode-key" t)
 
 ;;; eshell
 (setq eshell-output-filter-functions
