@@ -119,7 +119,29 @@
     (interactive)
     (shell-command-to-string
      "/usr/libexec/mozc/mozc_tool --mode=word_register_dialog"))
-  (global-set-key (kbd "C-<f7>") 'mozc-tool))
+  (global-set-key (kbd "C-<f7>") 'mozc-tool)
+  ;; .xprofile
+  ;; xcape -e 'Shift_L=Muhenkan;Shift_R=Henkan_Mode'
+  (global-set-key [zenkaku-hankaku] 'toggle-input-method)
+  (global-set-key [henkan]
+                  (lambda () (interactive)
+                    (mozc-mode 1)
+                    (when (null current-input-method) (toggle-input-method))))
+  (global-set-key [muhenkan]
+                  (lambda () (interactive)
+                    (deactivate-input-method)))
+  (defadvice mozc_handle-event (around intercept-keys (event))
+    "Intercept keys muhenkan and zenkaku-hankaku, before passing keys
+to mozc-server (which the function mozc-handle-event does), to
+properly disable mozc-mode."
+    (if (member event (list 'zenkaku-hankaku 'muhenkan))
+        (progn
+          (mozc-clean-up-session)
+          (mozc-mode nil)
+          (deactivate-input-method))
+      (progn
+        ad-do-it)))
+  (ad-activate 'mozc-handle-event))
 
 ;; tabグローバル設定
 (setq-default indent-tabs-mode nil)
