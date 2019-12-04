@@ -40,6 +40,7 @@ let-alist
 flycheck
 flycheck-posframe
 go-mode
+app-emacs/hydra
 lsp-mode
 lsp-ui
 treepy
