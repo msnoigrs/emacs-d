@@ -7,6 +7,7 @@ company-lsp
 company-mode
 company-statistics
 dash
+company-quickhelp
 posframe
 company-posframe
 desktop-file-utils
