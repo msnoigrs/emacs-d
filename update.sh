@@ -53,7 +53,8 @@ git-modes
 magit
 git-gutter-plus
 editorconfig-emacs
-google-translate"
+google-translate
+powershell-mode"
 
 #mozc-popup
 #flycheck-pos-tip
