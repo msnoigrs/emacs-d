@@ -45,10 +45,10 @@
 ;; (setq user-mail-address "example@example.com")
 (load "my-profile" t)
 
-(if (fboundp 'tool-bar-mode)
-    (tool-bar-mode 0))
-(if (fboundp 'scroll-bar-mode)
-    (set-scroll-bar-mode 'right))
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode 0))
+(when (fboundp 'scroll-bar-mode)
+  (set-scroll-bar-mode 'right))
 
 ;; Ctrl-h でカーソル前の文字を消す
 (define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
@@ -66,10 +66,49 @@
                 (tool-bar-lines . 0))
               default-frame-alist))
 
+;; https://2ch.vet/re_toro_unix_1514601894_331_100
+;; https://knowledge.sakura.ad.jp/8494/
+;; http://extra-vision.blogspot.com/2016/07/emacs.html
+;; https://www.shimmy1996.com/en/posts/2018-06-24-fun-with-fonts-in-emacs/
+;; https://idiocy.org/emacs-fonts-and-fontsets.html
+;; https://gist.github.com/alanthird/7152752d384325a83677f4a90e1e1a05
+
+(create-fontset-from-ascii-font
+ "Cica-10.5:weight=normal:slant=normal" nil "user") ;; fontset-user
+(set-fontset-font "fontset-user" 'ascii
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'arabic
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'latin
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'kana
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'han
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'cjk-misc
+                  "Cica-10.5:weight=normal:slant=normal")
+(set-fontset-font "fontset-user" 'hangul
+                  "Noto Sans CJK KR Regular-10:weight=regular:slant=normal")
+(set-fontset-font "fontset-user" 'han
+                  "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
+                  nil 'append)
+(set-fontset-font "fontset-user" 'cjk-misc
+                  "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
+                  nil 'append)
+(set-fontset-font "fontset-user" 'han
+                  "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
+                  nil 'append)
+(set-fontset-font "fontset-user" 'cjk-misc
+                  "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
+                  nil 'append)
+(set-fontset-font "fontset-user" 'unicode
+                  "Cica-10.5:weight=normal:slant=normal"
+                  nil 'append)
+
 (if (eq system-type 'windows-nt)
     ;; Windows
     (setq default-frame-alist
-	  (append '((font . "MyricaM M-10")
+	  (append '((font . "fontset-user")
                 (height . 120) ; 4K panel
                 (line-spacing . 0.15))
               default-frame-alist))
@@ -79,7 +118,7 @@
 	;; 10.5/12/13.5/15/18pt(1.5の倍数)
 	;(append '((font . "M+ 1mn light-10.5")
     ;(append '((font . "Source Han Mono-9.5")
-        (append '((font . "MyricaM M-10.5")
+        (append '((font . "fontset-user")
                   (height . 100)) ; 4K panel
                 default-frame-alist)))
 
@@ -433,6 +472,13 @@ with external browser."
 (add-hook 'eshell-mode-hook 'ansi-color-for-comint-mode-on)
 
 ;; cc-mode
+(add-hook 'c++-mode-hook
+          '(lambda ()
+             (c-set-style "Google")))
+(add-hook 'c-mode-hook
+          '(lambda ()
+             (c-set-style "linux")))
+
 (defconst my-java-style
          '((c-basic-offset . 4) ; change
            (tab-width . 4)
@@ -549,6 +595,8 @@ with external browser."
   (define-key company-active-map [tab] 'company-complete-selection)
   (define-key company-active-map (kbd "C-h") nil)
   (define-key company-active-map (kbd "C-S-h") 'company-show-doc-buffer)
+  (when (eq system-type 'windows-nt)
+      (setq company-clang-executable "c:/Program Files/LLVM/bin/clang++.exe"))
   )
 (when (require 'company nil t)
   (global-company-mode))
@@ -568,18 +616,22 @@ with external browser."
 ;;;;; NamespaceIndentation: All
 ;;;;; IndentWidth: 2
 ;;;;; TabWidth: 2
-  (add-hook 'c-mode-hook 'cc-mode-init)
-  (add-hook 'c++-mode-hook 'cc-mode-init))
+  (add-hook 'c-mode-hook #'cc-mode-init)
+  (add-hook 'c++-mode-hook #'cc-mode-init))
 
 (when (require 'lsp-mode nil t)
   (setq lsp-enable-indentation nil)
   (require 'lsp-clients)
   (add-hook 'python-mode-hook #'lsp)
-  (when (require 'ccls nil t)
-    (setq ccls-executable "/usr/bin/ccls"))
-  (add-hook 'c-mode-hook #'lsp)
-  (add-hook 'c++-mode-hook #'lsp)
-  (add-hook 'objc-mode-hook #'lsp)
+  (defun cc-mode-ccls ()
+    (when (require 'ccls nil t)
+      (if (eq system-type 'windows-nt)
+          (setq ccls-executable "c:/Users/admin/work/ccls/ccls.exe")
+        (setq ccls-executable "/usr/bin/ccls")))
+    (lsp))
+  (add-hook 'c-mode-hook #'cc-mode-ccls)
+  (add-hook 'c++-mode-hook #'cc-mode-ccls)
+  (add-hook 'objc-mode-hook #'cc-mode-ccls)
   (when (require 'lsp-ui nil t)
     (setq lsp-ui-doc-header nil)
     (setq lsp-ui-doc-border "violet")
@@ -588,7 +640,7 @@ with external browser."
     (setq lsp-ui-sideline-ignore-duplicate t)
     (setq lsp-ui-peek-always-show t)
     (setq lsp-ui-flycheck-enable t)
-    (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+    (add-hook 'lsp-mode-hook #'lsp-ui-mode))
   (when (require 'company nil t)
     (when (require 'company-lsp nil t)
       (push 'company-lsp company-backends))))
@@ -600,7 +652,7 @@ with external browser."
   (add-hook 'go-mode-hook
             (lambda ()
               (setq indent-tabs-mode t)))
-  (add-hook 'before-save-hook 'lsp-format-buffer nil 't))
+  (add-hook 'before-save-hook #'lsp-format-buffer nil 't))
   ;(add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
 
 (when (require 'company-mode nil t)
@@ -642,6 +694,14 @@ with external browser."
 ;(load "ghub-autoloads")
 ;(load "magit-popup-autoloads")
 ;(load "magit-autoloads")
+
+(require 'powershell nil t)
+(autoload 'bat-mode "bat-mode" "batch file mode." t)
+(add-to-list 'auto-mode-alist '("\\.\\(cmd\\|bat\\)$" . bat-mode))
+
+(when (require 'cmake-mode nil t)
+  (when (eq system-type 'windows-nt)
+    (setenv "PATH" (concat (getenv "PROGRAMFILES") "(x86)\\CMake\\bin;" (getenv "PATH")))))
 
 (when (require 'git-gutter+ nil t)
  (global-git-gutter+-mode t)
