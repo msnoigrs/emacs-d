@@ -34,7 +34,6 @@ quickrun
 emacs-ccls
 emmet-mode
 s
-seq
 f
 ht
 let-alist
