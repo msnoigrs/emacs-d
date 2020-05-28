@@ -348,6 +348,7 @@ with external browser."
   (global-set-key "\C-xj" 'open-junk-file))
 
 (when (require 'editorconfig nil t)
+  (require 'editorconfig-core)
   (editorconfig-mode 1))
 
 (require 'org)
