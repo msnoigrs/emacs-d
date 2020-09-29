@@ -349,6 +349,7 @@ with external browser."
 
 (when (require 'editorconfig nil t)
   (require 'editorconfig-core)
+  (set-variable 'editorconfig-exec-path "/usr/bin/editorconfig")
   (editorconfig-mode 1))
 
 (require 'org)
@@ -428,11 +429,11 @@ with external browser."
   (setq markdown-command-needs-filename nil))
 
 (when (require 'scss-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))  
+  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
   (add-hook 'scss-mode-hook
             '(lambda ()
                (setq scss-compile-at-save nil))))
-               
+
 (when (require 'coffee-mode nil t)
   (add-hook 'coffee-mode-hook
             '(lambda ()
@@ -622,7 +623,8 @@ with external browser."
 
 (when (require 'lsp-mode nil t)
   (setq lsp-enable-indentation nil)
-  (require 'lsp-clients)
+  (setq lsp-modeline-diagnostics-enable t)
+  ;(require 'lsp-clients)
   (add-hook 'python-mode-hook #'lsp)
   (defun cc-mode-ccls ()
     (when (require 'ccls nil t)
@@ -666,6 +668,9 @@ with external browser."
   (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode)))
 
 (require 'vue-mode nil t)
+
+(when (require 'protobuf-mode nil t)
+  (add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode)))
 
 (when (require 'js2-mode nil t)
   (autoload 'ac-js2-mode "ac-js2" nil t)
