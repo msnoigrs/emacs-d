@@ -24,6 +24,7 @@ mozc-el-extensions
 smartparens
 spinner
 org-mode
+org-contrib
 ox-gfm
 ox-qmd
 popup-el
@@ -36,7 +37,6 @@ emmet-mode
 s
 f
 ht
-let-alist
 flycheck
 flycheck-posframe
 go-mode
