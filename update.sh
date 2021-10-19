@@ -6,14 +6,13 @@ comment-dwim2
 company-lsp
 company-mode
 company-statistics
-dash
-company-quickhelp
+app-emacs/dash
 posframe
 company-posframe
 desktop-file-utils
 direx-el
 dropdown-list
-ebuild-mode
+app-emacs/ebuild-mode
 toml-mode
 web-mode
 yaml-mode
@@ -30,6 +29,7 @@ ox-qmd
 popup-el
 popwin-el
 pos-tip
+company-quickhelp
 projectile
 quickrun
 emacs-ccls
