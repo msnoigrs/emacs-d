@@ -658,6 +658,13 @@ with external browser."
   (add-hook 'before-save-hook #'lsp-format-buffer nil 't))
   ;(add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
 
+(when (require 'rust-mode nil t)
+  (when (require 'lsp-mode nil t)
+    (add-hook 'rust-mode-hook #'lsp)
+    (define-key rust-mode-map (kbd "C-c h") 'lsp-describe-thing-at-point))
+  (when (require 'cargo nil t)
+    (add-hook 'rust-mode-hook #'cargo-minor-mode)))
+
 (when (require 'company-mode nil t)
   (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
   (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle))

@@ -40,6 +40,8 @@ ht
 flycheck
 flycheck-posframe
 go-mode
+rust-mode
+carog-el
 app-emacs/hydra
 lsp-mode
 lsp-ui
