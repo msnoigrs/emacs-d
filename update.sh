@@ -41,7 +41,7 @@ flycheck
 flycheck-posframe
 go-mode
 rust-mode
-carog-el
+cargo-el
 app-emacs/hydra
 lsp-mode
 lsp-ui
