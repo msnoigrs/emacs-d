@@ -2,7 +2,7 @@
 
 PKGS="
 app-emacs/async
-comment-dwim2
+compat
 company-lsp
 company-mode
 company-statistics
@@ -24,6 +24,8 @@ mozc-el-extensions
 smartparens
 spinner
 org-mode
+comment-dwim2
+org-contrib
 ox-gfm
 mimetypes
 ox-qmd
