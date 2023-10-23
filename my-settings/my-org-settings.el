@@ -6,7 +6,6 @@
 (require 'org-id)
 ;(setq org-rst-link-use-ref-role t)
 
-
 ;(setq org-completion-use-helm nil)
 
 (add-hook 'org-mode-hook
@@ -114,12 +113,12 @@
 
 ;(setq org-mobile-use-encryption t) ; Enable encryption
 ;(setq org-mobile-encryption-password "minimini") ; Set a password
-
 (require 'ox-rst)
 
 (require 'ox-md)
 (require 'ox-gfm)
 (require 'ox-qmd)
+(require 'ox-hugo)
 
 (require 'ox-html)
 (setq org-html-doctype "html5")

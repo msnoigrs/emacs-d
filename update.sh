@@ -7,6 +7,7 @@ company-lsp
 company-mode
 company-statistics
 app-emacs/dash
+company-quickhelp
 posframe
 company-posframe
 desktop-file-utils
@@ -23,18 +24,20 @@ mozc-el-extensions
 smartparens
 spinner
 org-mode
-org-contrib
 ox-gfm
+mimetypes
 ox-qmd
+tomelr
+ox-hugo
 popup-el
-popwin-el
+popwin
 pos-tip
-company-quickhelp
 projectile
 quickrun
 emacs-ccls
 emmet-mode
 s
+app-emacs/seq
 f
 ht
 flycheck
@@ -54,9 +57,9 @@ git-modes
 magit
 git-gutter-plus
 editorconfig-emacs
-google-translate
-powershell-mode"
+google-translate"
 
+#let-alist
 #mozc-popup
 #flycheck-pos-tip
 

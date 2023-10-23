@@ -73,60 +73,61 @@
 ;; https://idiocy.org/emacs-fonts-and-fontsets.html
 ;; https://gist.github.com/alanthird/7152752d384325a83677f4a90e1e1a05
 
-(create-fontset-from-ascii-font
- "Cica-10.5:weight=normal:slant=normal" nil "user") ;; fontset-user
-(set-fontset-font "fontset-user" 'ascii
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'arabic
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'latin
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'kana
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'han
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'cjk-misc
-                  "Cica-10.5:weight=normal:slant=normal")
-(set-fontset-font "fontset-user" 'hangul
-                  "Noto Sans CJK KR Regular-10:weight=regular:slant=normal")
-(set-fontset-font "fontset-user" 'han
-                  "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
-                  nil 'append)
-(set-fontset-font "fontset-user" 'cjk-misc
-                  "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
-                  nil 'append)
-(set-fontset-font "fontset-user" 'han
-                  "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
-                  nil 'append)
-(set-fontset-font "fontset-user" 'cjk-misc
-                  "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
-                  nil 'append)
-(set-fontset-font "fontset-user" 'unicode
-                  "Cica-10.5:weight=normal:slant=normal"
-                  nil 'append)
+(when window-system
+  (create-fontset-from-ascii-font
+   "Cica-10.5:weight=normal:slant=normal" nil "user") ;; fontset-user
+  (set-fontset-font "fontset-user" 'ascii
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'arabic
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'latin
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'kana
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'han
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'cjk-misc
+		    "Cica-10.5:weight=normal:slant=normal")
+  (set-fontset-font "fontset-user" 'hangul
+		    "Noto Sans CJK KR Regular-10:weight=regular:slant=normal")
+  (set-fontset-font "fontset-user" 'han
+		    "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
+		    nil 'append)
+  (set-fontset-font "fontset-user" 'cjk-misc
+		    "Noto Sans CJK SC Regular-10:weight=regular:slant=normal"
+		    nil 'append)
+  (set-fontset-font "fontset-user" 'han
+		    "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
+		    nil 'append)
+  (set-fontset-font "fontset-user" 'cjk-misc
+		    "Noto Sans CJK TC Regular-10:weight=regular:slant=normal"
+		    nil 'append)
+  (set-fontset-font "fontset-user" 'unicode
+		    "Cica-10.5:weight=normal:slant=normal"
+		    nil 'append)
 
-(if (eq system-type 'windows-nt)
-    ;; Windows
+  (if (eq system-type 'windows-nt)
+      ;; Windows
+      (setq default-frame-alist
+	    (append '((font . "fontset-user")
+                      (height . 120) ; 4K panel
+                      (line-spacing . 0.15))
+		    default-frame-alist))
+    ;; Windows以外
     (setq default-frame-alist
-	  (append '((font . "fontset-user")
-                (height . 120) ; 4K panel
-                (line-spacing . 0.15))
-              default-frame-alist))
-  ;; Windows以外
-  (setq default-frame-alist
-	;; 全角と半角の表示幅の比率が正確に2:1になるのは
-	;; 10.5/12/13.5/15/18pt(1.5の倍数)
-	;(append '((font . "M+ 1mn light-10.5")
-    ;(append '((font . "Source Han Mono-9.5")
-        (append '((font . "fontset-user")
-                  (height . 100)) ; 4K panel
-                default-frame-alist)))
+	  ;; 全角と半角の表示幅の比率が正確に2:1になるのは
+	  ;; 10.5/12/13.5/15/18pt(1.5の倍数)
+	  ;(append '((font . "M+ 1mn light-10.5")
+	  ;(append '((font . "Source Han Mono-9.5")
+          (append '((font . "fontset-user")
+                    (height . 100)) ; 4K panel
+                  default-frame-alist))))
 
 ;;;; The lines above are basic settings.
 
-;; (setq url-proxy-services
-;;       '(("http" . "xxx.xxx.xxx.xxx:8080")
-;;         ("https" . "xxx.xxx.xxx.xxx:8080")))
+(setq url-proxy-services
+      '(("http" . "xxx.xxx.xxx.xxx:8080")
+        ("https" . "xxx.xxx.xxx.xxx:8080")))
 (let ((proxy-settings (expand-file-name
                        (concat user-emacs-directory "my-settings/my-proxy.el"))))
   (when (file-exists-p proxy-settings)
@@ -139,9 +140,9 @@
 (setq frame-title-format (format "emacs@%s : %%f" (system-name)))
 
 ;; sessionファイルを~/.emacs.d/sessionsに作成
-;; (defun emacs-session-filename (SESSION-ID)
-;;   (expand-file-name
-;;    (concat user-emacs-directory "sessions/session." SESSION-ID)))
+(defun emacs-session-filename (SESSION-ID)
+  (expand-file-name
+   (concat user-emacs-directory "sessions/session." SESSION-ID)))
 
 ;; mozc
 (when (require 'mozc nil t)
@@ -168,19 +169,19 @@
                     (when (null current-input-method) (toggle-input-method))))
   (global-set-key [muhenkan]
                   (lambda () (interactive)
-                    (deactivate-input-method)))
-  (defadvice mozc_handle-event (around intercept-keys (event))
-    "Intercept keys muhenkan and zenkaku-hankaku, before passing keys
-to mozc-server (which the function mozc-handle-event does), to
-properly disable mozc-mode."
-    (if (member event (list 'zenkaku-hankaku 'muhenkan))
-        (progn
-          (mozc-clean-up-session)
-          (mozc-mode nil)
-          (deactivate-input-method))
-      (progn
-        ad-do-it)))
-  (ad-activate 'mozc-handle-event))
+                    (deactivate-input-method))))
+;;   (defadvice mozc_handle-event (around intercept-keys (event))
+;;     "Intercept keys muhenkan and zenkaku-hankaku, before passing keys
+;; to mozc-server (which the function mozc-handle-event does), to
+;; properly disable mozc-mode."
+;;     (if (member event (list 'zenkaku-hankaku 'muhenkan))
+;;         (progn
+;;           (mozc-clean-up-session)
+;;           (mozc-mode nil)
+;;           (deactivate-input-method))
+;;       (progn
+;;         ad-do-it)))
+;;   (ad-activate 'mozc-handle-event))
 
 ;; tabグローバル設定
 (setq-default indent-tabs-mode nil)
@@ -674,7 +675,7 @@ with external browser."
 (when (require 'yaml-mode nil t)
   (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode)))
 
-(require 'vue-mode nil t)
+;(require 'vue-mode nil t)
 
 (when (require 'protobuf-mode nil t)
   (add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode)))
