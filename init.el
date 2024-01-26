@@ -125,13 +125,13 @@
 
 ;;;; The lines above are basic settings.
 
-(setq url-proxy-services
-      '(("http" . "xxx.xxx.xxx.xxx:8080")
-        ("https" . "xxx.xxx.xxx.xxx:8080")))
-(let ((proxy-settings (expand-file-name
-                       (concat user-emacs-directory "my-settings/my-proxy.el"))))
-  (when (file-exists-p proxy-settings)
-    (load-file proxy-settings)))
+;; (setq url-proxy-services
+;;       '(("http" . "xxx.xxx.xxx.xxx:8080")
+;;         ("https" . "xxx.xxx.xxx.xxx:8080")))
+;; (let ((proxy-settings (expand-file-name
+;;                        (concat user-emacs-directory "my-settings/my-proxy.el"))))
+;;   (when (file-exists-p proxy-settings)
+;;     (load-file proxy-settings)))
 ;;;(load "my-proxy" t)
 
 (autoload 'async-start "async")
@@ -145,43 +145,44 @@
    (concat user-emacs-directory "sessions/session." SESSION-ID)))
 
 ;; mozc
-(when (require 'mozc nil t)
-  ;; (if (require 'mozc-popup nil t)
-  ;;     (setq mozc-candidate-style 'popup)
-  ;;   (setq mozc-candidate-style 'overlay))
-  (if (require 'mozc-posframe nil t)
-      (setq mozc-candidate-style 'posframe))
-  (require 'mozc-isearch nil t)
-  (require 'mozc-mode-line-indicator nil t)
-  (setq default-input-method "japanese-mozc")
-  (setq mozc-keymap-kana mozc-keymap-kana-101us)
-  (defun mozc-tool ()
-    (interactive)
-    (shell-command-to-string
-     "/usr/libexec/mozc/mozc_tool --mode=word_register_dialog"))
-  (global-set-key (kbd "C-<f7>") 'mozc-tool)
-  ;; .xprofile
-  ;; xcape -e 'Shift_L=Muhenkan;Shift_R=Henkan_Mode'
-  (global-set-key [zenkaku-hankaku] 'toggle-input-method)
-  (global-set-key [henkan]
-                  (lambda () (interactive)
-                    (mozc-mode 1)
-                    (when (null current-input-method) (toggle-input-method))))
-  (global-set-key [muhenkan]
-                  (lambda () (interactive)
-                    (deactivate-input-method))))
-;;   (defadvice mozc_handle-event (around intercept-keys (event))
-;;     "Intercept keys muhenkan and zenkaku-hankaku, before passing keys
-;; to mozc-server (which the function mozc-handle-event does), to
-;; properly disable mozc-mode."
-;;     (if (member event (list 'zenkaku-hankaku 'muhenkan))
-;;         (progn
-;;           (mozc-clean-up-session)
-;;           (mozc-mode nil)
-;;           (deactivate-input-method))
-;;       (progn
-;;         ad-do-it)))
-;;   (ad-activate 'mozc-handle-event))
+(cond
+ ((eq system-type 'windows-nt)
+  (setq default-input-method "W32-IME")
+  (setq-default w32-ime-mode-line-state-indicator "[--]")
+  (setq w32-ime-mode-line-state-indicator-list '("[--]" "[あ]" "[--]"))
+  (w32-ime-initialize)
+  ;; IME 制御（yes/no などの入力の時に IME を off にする）
+  (w32-ime-wrap-function-to-control-ime 'universal-argument)
+  (w32-ime-wrap-function-to-control-ime 'read-string)
+  (w32-ime-wrap-function-to-control-ime 'read-char)
+  (w32-ime-wrap-function-to-control-ime 'read-from-minibuffer)
+  (w32-ime-wrap-function-to-control-ime 'y-or-n-p)
+  (w32-ime-wrap-function-to-control-ime 'yes-or-no-p)
+  (w32-ime-wrap-function-to-control-ime 'map-y-or-n-p)
+  (w32-ime-wrap-function-to-control-ime 'register-sread-with-preview))
+ (t
+  (when (require 'mozc nil t)
+    (if (require 'mozc-posframe nil t)
+        (setq mozc-candidate-style 'posframe))
+    (require 'mozc-isearch nil t)
+    (require 'mozc-mode-line-indicator nil t)
+    (setq default-input-method "japanese-mozc")
+    (setq mozc-keymap-kana mozc-keymap-kana-101us)
+    (defun mozc-tool ()
+      (interactive)
+      (shell-command-to-string
+       "/usr/libexec/mozc/mozc_tool --mode=word_register_dialog"))
+    (global-set-key (kbd "C-<f7>") 'mozc-tool)
+    ;; .xprofile
+    ;; xcape -e 'Shift_L=Muhenkan;Shift_R=Henkan_Mode'
+    (global-set-key [zenkaku-hankaku] 'toggle-input-method)
+    (global-set-key [henkan]
+                    (lambda () (interactive)
+                      (mozc-mode 1)
+                      (when (null current-input-method) (toggle-input-method))))
+    (global-set-key [muhenkan]
+                    (lambda () (interactive)
+                      (deactivate-input-method))))))
 
 ;; tabグローバル設定
 (setq-default indent-tabs-mode nil)
@@ -408,16 +409,16 @@ with external browser."
   (add-hook 'web-mode-hook 'my-web-mode-hook)
   )
 
-(when (require 'emmet-mode nil t)
-  (add-hook 'emmet-mode-hook (lambda () (setq emmet-indentation 2)))
-  (dolist (hook (list
-                 'vue-mode-hook
-                 'sgml-mode-hook
-                 'css-mode-hook
-                 'web-mode-hook))
-    (add-hook hook (lambda ()
-                   (setq emmet-preview-default nil) ;don't show preview when expand code
-                   (emmet-mode)))))
+;; (when (require 'emmet-mode nil t)
+;;   (add-hook 'emmet-mode-hook (lambda () (setq emmet-indentation 2)))
+;;   (dolist (hook (list
+;;                  'vue-mode-hook
+;;                  'sgml-mode-hook
+;;                  'css-mode-hook
+;;                  'web-mode-hook))
+;;     (add-hook hook (lambda ()
+;;                    (setq emmet-preview-default nil) ;don't show preview when expand code
+;;                    (emmet-mode)))))
 
 (when (require 'markdown-mode nil t)
   (set-face-attribute 'markdown-code-face nil :inherit 'Default)
