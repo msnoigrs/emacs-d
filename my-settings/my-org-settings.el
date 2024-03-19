@@ -156,7 +156,7 @@
 (setq org-export-with-creator nil)
 (setq org-export-with-toc nil)
 (setq org-export-with-sub-superscripts nil)
-;(setq org-latex-with-hyperref nil)
+(setq org-latex-with-hyperref nil)
 
 ;(setq org-latex-title-command "\\maketitle\\thispagestyle{empty}\n%")
 
@@ -187,8 +187,8 @@
 (setq org-latex-default-packages-alist
 	  '((""     "luatexja"  t)
         (""     "luatexja-otf"  t)
-		("bold"     "luatexja-preset"  t)
-		(""     "fixltx2e"  nil)
+        ("match"     "luatexja-fontspec"  t)
+		("haranoaji,bold"     "luatexja-preset"  t)
 		(""     "graphicx"  t)
 		(""     "float"     nil)
 		(""     "wrapfig"   nil)
@@ -197,22 +197,22 @@
 		(""     "marvosym"  t)
 		(""     "wasysym"   t)
 		(""     "amssymb"   t)
+		(""     "hyperref"  t)
 		(""     "amstext"   nil)
-		("unicode=true"     "hyperref"  nil) ;日本語化けないように
-		;(""     "tabu" nil)
 		(""     "array" nil)
 		(""     "paralist" nil)
-		("usenames,table,hyperref"     "xcolor"     t)
+		(""     "xcolor" t)
 		"\\tolerance=1000"
 		"\\definecolor{lightb}{RGB}{217,224,250}"
-		"\\hypersetup{colorlinks=true}"
+		"\\hypersetup{colorlinks=true,linkcolor=lightb,setpagesize=false}"
 		)
 	  )
+
+;		"\\definecolor{lightb}{RGB}{217,224,250}"
 
 ;		"\\defaultjfontfeatures{Scale=0.92487}"
 ;		"\\setsansfont[Ligatures=TeX]{Verdana}"
 ;		"\\setsansfont[Ligatures=TeX]{Ubuntu}"
-;		"\\setmonofont{Inconsolata}"
 
 ;		"\\setmainfont[Ligatures=TeX]{TexGyreTermes}"
 ;		"\\setsansfont[Ligatures=TeX]{TexGyreHeros}"
@@ -230,11 +230,10 @@
 [PACKAGES]
 \\usepackage{geometry}
 \\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
-\\setmainfont[Ligatures=TeX]{DroidSerif}
-\\setsansfont[Ligatures=TeX]{DroidSans}
-\\setmonofont{Inconsolata}
-\\setmainjfont[BoldFont={Source Han Sans JP-Medium}]{Source Han Serif JP-Regular}
-\\setsansjfont[BoldFont={Source Han Sans JP-Bold}]{Source Han Sans JP-Regular}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
 \\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
 \\usepackage{fancyhdr}
 \\makeatletter
@@ -280,11 +279,10 @@
 [PACKAGES]
 \\usepackage{geometry}
 \\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
-\\setmainfont[Ligatures=TeX]{DroidSerif}
-\\setsansfont[Ligatures=TeX]{DroidSans}
-\\setmonofont{Inconsolata}
-\\setmainjfont[BoldFont={Source Han Sans JP-Medium}]{Source Han Serif JP-Regular}
-\\setsansjfont[BoldFont={Source Han Sans JP-Bold}]{Source Han Sans JP-Regular}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
 \\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
 \\usepackage{fancyhdr}
 \\makeatletter
@@ -331,11 +329,10 @@
 [PACKAGES]
 \\usepackage{geometry}
 \\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
-\\setmainfont[Ligatures=TeX]{DroidSerif}
-\\setsansfont[Ligatures=TeX]{DroidSans}
-\\setmonofont{Inconsolata}
-\\setmainjfont[BoldFont={Source Han Sans JP-Medium}]{Source Han Serif JP-Regular}
-\\setsansjfont[BoldFont={Source Han Sans JP-Bold}]{Source Han Sans JP-Regular}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
 \\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
 \\usepackage{fancyhdr}
 \\pagestyle{fancy}
@@ -360,11 +357,11 @@
 [PACKAGES]
 \\usepackage{geometry}
 \\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
-\\setmainfont[Ligatures=TeX]{DroidSerif}
-\\setsansfont[Ligatures=TeX]{DroidSans}
-\\setmonofont{Inconsolata}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
 \\setmainjfont{AR PL UMing CN}
-\\setsansjfont[BoldFont={Source Han Sans JP-Bold}]{Source Han Sans JP-Regular}
+\\setmonojfont{Cica}
 \\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
 \\usepackage{fancyhdr}
 \\pagestyle{fancy}
