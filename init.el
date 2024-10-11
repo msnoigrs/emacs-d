@@ -1,79 +1,9 @@
-;;; init.el --- emacs init file
-
-;;; Commentary:
-
-;;; Code:
-
-(set-language-environment "Japanese")
-(set-default-coding-systems 'utf-8)
-
-(if (eq system-type 'windows-nt)
-    ;; Windows
-    (progn
-      (prefer-coding-system 'utf-8-dos)
-      (set-file-name-coding-system 'cp932)
-      (set-keyboard-coding-system 'cp932)
-      (set-terminal-coding-system 'cp932)
-      (modify-coding-system-alist
-       'file ".+\\.\\(org\\|py\\|java\\|go\\)$" 'utf-8-unix)
-      (defun run-bash ()
-        (interactive)
-        (let ((explicit-shell-file-name "c:/msys64/usr/bin/bash.exe")
-	          (shell-file-name "bash")
-	          (explicit-bash.exe-args '("--noediting" "--login" "-i")))
-          (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
-          (add-hook 'comint-output-filter-functions 'comint-strip-ctrl-m)
-          (shell "*bash*"))))
-  ;; Windows以外
-  (prefer-coding-system 'utf-8-unix))
-
-(defun add-to-load-path (&rest paths)
-  (let (path)
-    (dolist (path paths paths)
-      (let ((default-directory
-              (expand-file-name (concat user-emacs-directory path))))
-        (add-to-list 'load-path default-directory)
-        (if (fboundp 'normal-top-level-add-subdirs-to-loadpath)
-            (normal-top-level-add-subdirs-to-load-path))))))
-
-(add-to-load-path
- "my-settings"
- "elisp"
-)
-
-;; (setq user-full-name "Name")
-;; (setq user-mail-address "example@example.com")
-(load "my-profile" t)
-
-(when (fboundp 'tool-bar-mode)
-  (tool-bar-mode 0))
-(when (fboundp 'scroll-bar-mode)
-  (set-scroll-bar-mode 'right))
-
-;; Ctrl-h でカーソル前の文字を消す
-(define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))
-;; suspend-frame を無効にする
-(global-unset-key (kbd "C-x C-z"))
-(global-unset-key (kbd "C-z"))
-
-(setq initial-frame-alist
-      (append '((top . 10)
-                (left . 570))
-              initial-frame-alist))
-
-(setq default-frame-alist
-      (append '((width . 81)
-                (tool-bar-lines . 0))
-              default-frame-alist))
-
-;; https://2ch.vet/re_toro_unix_1514601894_331_100
-;; https://knowledge.sakura.ad.jp/8494/
-;; http://extra-vision.blogspot.com/2016/07/emacs.html
-;; https://www.shimmy1996.com/en/posts/2018-06-24-fun-with-fonts-in-emacs/
-;; https://idiocy.org/emacs-fonts-and-fontsets.html
-;; https://gist.github.com/alanthird/7152752d384325a83677f4a90e1e1a05
+;;; init.el -*- lexical-bindings:t; no-byte-compile:t -*-
 
 (when window-system
+  (setq modus-themes-bold-constructs t)
+  (load-theme 'modus-operandi-tinted)
+
   (create-fontset-from-ascii-font
    "Cica-10.5:weight=normal:slant=normal" nil "user") ;; fontset-user
   (set-fontset-font "fontset-user" 'ascii
@@ -109,42 +39,196 @@
   (if (eq system-type 'windows-nt)
       ;; Windows
       (setq default-frame-alist
-	    (append '((font . "fontset-user")
-                      (height . 120) ; 4K panel
-                      (line-spacing . 0.15))
-		    default-frame-alist))
+	    (append
+	     (list
+	      '(font . "fontset-user")
+ 	      '(vertical-scroll-bars . nil)
+	      '(tool-bar-lines . 0)
+	      '(menu-bar-lines . 0)
+ 	      '(width . 81)
+              '(height . 120) ; 4K panel
+              '(line-spacing . 0.15))))
+
     ;; Windows以外
     (setq default-frame-alist
 	  ;; 全角と半角の表示幅の比率が正確に2:1になるのは
 	  ;; 10.5/12/13.5/15/18pt(1.5の倍数)
 	  ;(append '((font . "M+ 1mn light-10.5")
 	  ;(append '((font . "Source Han Mono-9.5")
-          (append '((font . "fontset-user")
-                    (height . 100)) ; 4K panel
-                  default-frame-alist))))
+          (append
+	   (list
+	    '(font . "fontset-user")
+ 	    '(vertical-scroll-bars . nil)
+	    '(tool-bar-lines . 0)
+	    '(menu-bar-lines . 0)
+ 	    '(width . 81)
+        '(height . 100)))))) ; 4K panel
 
-;;;; The lines above are basic settings.
+(cond
+ ((eq system-type 'windows-nt)
+  (setq w32-get-true-file-attributes nil)
+  ;(setq w32-pipe-read-delay 50)
+  (setq w32-pipe-buffer-size (* 64 1024))
+  (setq w32-use-native-image-API t)
+  (prefer-coding-system 'utf-8-dos)
+  (set-file-name-coding-system 'cp932)
+  ;(set-keyboard-coding-system 'cp932)
+  ;(set-terminal-coding-system 'cp932)
+  ;(setq-default default-process-coding-system '(utf-8-unix . japanese-cp932-dos))
+  ;(add-to-list 'process-coding-system-alist '("git" utf-8 . utf-8))
+  (modify-coding-system-alist
+   'file ".+\\.\\(org\\|py\\|java\\|go\\)$" 'utf-8-unix))
+ (t
+  ((prefer-coding-system 'utf-8-unix))))
 
-;; (setq url-proxy-services
-;;       '(("http" . "xxx.xxx.xxx.xxx:8080")
-;;         ("https" . "xxx.xxx.xxx.xxx:8080")))
-;; (let ((proxy-settings (expand-file-name
-;;                        (concat user-emacs-directory "my-settings/my-proxy.el"))))
-;;   (when (file-exists-p proxy-settings)
-;;     (load-file proxy-settings)))
-;;;(load "my-proxy" t)
 
-(autoload 'async-start "async")
-(autoload 'async-start-process "async")
+(defun add-to-load-path (&rest paths)
+  (let (path)
+    (dolist (path paths paths)
+      (let ((default-directory
+              (expand-file-name (concat user-emacs-directory path))))
+        (add-to-list 'load-path default-directory)
+        (if (fboundp 'normal-top-level-add-subdirs-to-loadpath)
+            (normal-top-level-add-subdirs-to-load-path))))))
 
-(setq frame-title-format (format "emacs@%s : %%f" (system-name)))
+(add-to-load-path
+ "my-settings"
+ "elisp"
+)
 
-;; sessionファイルを~/.emacs.d/sessionsに作成
-(defun emacs-session-filename (SESSION-ID)
-  (expand-file-name
-   (concat user-emacs-directory "sessions/session." SESSION-ID)))
+;; (setq user-full-name "Name")
+;; (setq user-mail-address "example@example.com")
+(load "my-profile" t)
 
-;; mozc
+(setq native-comp-async-report-warnings-errors 'silent)
+
+(defvar elpaca-installer-version 0.7)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil :depth 1
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                 ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                 ,@(when-let ((depth (plist-get order :depth)))
+                                                     (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                 ,(plist-get order :repo) ,repo))))
+                 ((zerop (call-process "git" nil buffer t "checkout"
+                                       (or (plist-get order :ref) "--"))))
+                 (emacs (concat invocation-directory invocation-name))
+                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                 ((require 'elpaca))
+                 ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
+
+;; Install use-package support
+(elpaca elpaca-use-package
+  ;; Enable :elpaca use-package keyword.
+  (elpaca-use-package-mode)
+  ;; Assume :elpaca t unless otherwise specified.
+  (setq elpaca-use-package-by-default t))
+
+;; Block until current queue processed.
+(elpaca-wait)
+
+(defmacro use-feature (name &rest args)
+  "Like `use-package' but accounting for asynchronous installation.
+    NAME and ARGS are in `use-package'."
+  (declare (indent defun))
+  `(use-package ,name
+     :elpaca nil
+     ,@args))
+
+;; https://www.emacswiki.org/emacs/SetupEl
+(elpaca setup (require 'setup))
+(elpaca-wait)
+
+(defun setup-wrap-to-install-package (body _name)
+"Wrap BODY in an `elpaca' block if necessary.
+The body is wrapped in an `elpaca' block if `setup-attributes'
+contains an alist with the key `elpaca'."
+(if (assq 'elpaca setup-attributes)
+    `(elpaca ,(cdr (assq 'elpaca setup-attributes)) ,@(macroexp-unprogn body))
+  body))
+;; Add the wrapper function
+(add-to-list 'setup-modifier-list #'setup-wrap-to-install-package)
+(setup-define :elpaca
+  (lambda (order &rest recipe)
+    (push (cond
+	   ((eq order t) `(elpaca . ,(setup-get 'feature)))
+	   ((eq order nil) '(elpaca . nil))
+	   (`(elpaca . (,order ,@recipe))))
+	  setup-attributes)
+    ;; If the macro wouldn't return nil, it would try to insert the result of
+    ;; `push' which is the new value of the modified list. As this value usually
+    ;; cannot be evaluated, it is better to return nil which the byte compiler
+    ;; would optimize away anyway.
+    nil)
+  :documentation "Install ORDER with `elpaca'.
+The ORDER can be used to deduce the feature context."
+  :shorthand #'cadr)
+
+(setup-define :opt
+  (lambda (&rest pairs)
+    `(setopt ,@pairs))
+  :after-loaded t)
+
+(setup-define :mode-remap
+  (lambda (src-mode)
+    `(add-to-list 'major-mode-remap-alist '(,src-mode . ,(setup-get 'feature)))))
+
+(setup-define :load-after
+    (lambda (&rest features)
+      (let ((body `(require ',(setup-get 'feature))))
+        (dolist (feature (nreverse features))
+          (setq body `(with-eval-after-load ',feature ,body)))
+        body))
+  :documentation "Load the current feature after FEATURES.")
+
+(setup-define :autoload
+  (lambda (func)
+    (let ((fn (if (memq (car-safe func) '(quote function))
+                  (cadr func)
+                func)))
+      `(unless (fboundp (quote ,fn))
+         (autoload (function ,fn) ,(symbol-name (setup-get 'feature)) nil t))))
+  :documentation "Autoload COMMAND if not already bound."
+  :repeatable t
+  :signature '(FUNC ...))
+
+(setup migemo
+  (:elpaca migemo :host github :repo "emacs-jp/migemo")
+  (:opt migemo-dictionary "c:/msys64/usr/local/share/migemo/utf-8/migemo-dict"
+        migemo-user-dictionary nil
+        migemo-regex-dictionary nil
+        migemo-coding-system 'utf-8-unix)
+  (require 'cmigemo)
+  ;;(require 'migemo-isearch-auto-enable)
+  (cmigemo-init))
+
+(setup posframe
+  (:elpaca t))
+
 (cond
  ((eq system-type 'windows-nt)
   (setq default-input-method "W32-IME")
@@ -184,11 +268,14 @@
                     (lambda () (interactive)
                       (deactivate-input-method))))))
 
+;; sessionファイルを~/.emacs.d/sessionsに作成
+(defun emacs-session-filename (SESSION-ID)
+  (expand-file-name
+   (concat user-emacs-directory "sessions/session." SESSION-ID)))
+
 ;; tabグローバル設定
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
-;(setq-default judge-indent-default-indent-width 4
-;	      judge-indent-default-tab-width 4)
 
 (defun eval-and-replace ()
   "Replace the preceding sexp with its value."
@@ -236,12 +323,12 @@ point reaches the beginning or end of the buffer, stop there."
     (byte-compile-file buffer-file-name)))
 (add-hook 'after-save-hook 'auto-recompile-el-buffer)
 
-(defun untabify-buffer ()
-  (interactive)
-  (untabify 1 (point-max))
-  (if (not (eq major-mode 'mew-draft-mode))
-      ;; delete-trailing-whitespace does not work in mew-draft-mode.
-      (delete-trailing-whitespace)))
+;; (defun untabify-buffer ()
+;;   (interactive)
+;;   (untabify 1 (point-max))
+;;   (if (not (eq major-mode 'mew-draft-mode))
+;;       ;; delete-trailing-whitespace does not work in mew-draft-mode.
+;;       (delete-trailing-whitespace)))
 
 (if (not (fboundp 'defun-if-undefined))
     (defmacro defun-if-undefined (name &rest rest)
@@ -273,612 +360,348 @@ point reaches the beginning or end of the buffer, stop there."
 (defun my-set-indent-tabs-mode ()
   (setq indent-tabs-mode (my-buffer-indent-tabs-code-p)))
 
-;(require 'dropdown-list)
+(setopt frame-title-format (format "emacs@%s : %%f" (system-name)))
 
-;(require 'dired-launch)
-(add-hook 'dired-load-hook (lambda () (load "dired-x")))
-
-(global-font-lock-mode 1)
-(setq font-lock-support-mode 'jit-lock-mode)
-;;; 種類ごとの色
-(add-hook 'font-lock-mode-hook
-          '(lambda ()
-             (set-face-foreground 'font-lock-comment-face "#969696")
-             (set-face-foreground 'font-lock-string-face "#CE7B00")
-             (set-face-foreground 'font-lock-keyword-face "#0000E6")
-             (set-face-foreground 'font-lock-builtin-face "#0000E6")
-             (set-face-foreground 'font-lock-function-name-face "magenta4")
-             (set-face-foreground 'font-lock-variable-name-face "#009900")
-             (set-face-foreground 'font-lock-type-face "purple4")
-             (set-face-foreground 'font-lock-constant-face "cyan4")
-             (set-face-foreground 'font-lock-warning-face "maroon")
-             ))
-
-;;(setq browse-url-browser-function 'browse-url-generic)
-;; (setq browse-url-generic-program
-;;       (if (file-exists-p "/usr/bin/chromium")
-;;           "/usr/bin/chromium"))
-;;(setq browse-url-generic-program "xdg-open")
-;;(setq browse-url-browser-function 'browse-url-generic)
-(defalias 'my-urls-externl-brower 'browse-url-xdg-open)
-
-(defun my-browse-url (&rest args)
-  "Prompt for whether or not to browse with EWW, if no browse
-with external browser."
-  (apply
-   (if (y-or-n-p "Browse with EWW? ")
-       'eww-browse-url
-     #'my-urls-external-browser)
-   args))
-(setq browse-url-browser-function #'my-browse-url)
-
-;; (when (require 'google-translate nil t)
-;;   (require 'google-translate-default-ui)
-;;   (setq google-translate-default-source-language "en")
-;;   (setq google-translate-default-target-language "ja")
-;;   (global-set-key "\C-ct" 'google-translate-at-point)
-;;   (global-set-key "\C-cT" 'google-translate-query-translate)
-;;   )
-(when (require 'google-translate nil t)
-  (require 'google-translate-smooth-ui)
-  (setq google-translate-translation-directions-alist
-        '(("en" . "ja") ("ja" , "en")))
-  (setq google-translate-backend-method 'curl)
-  (global-set-key "\C-ct" 'google-translate-smooth-translate)
-  )
-
-(defvar my-google-translate-english-chars "[:ascii:]'""-")
-(defvar my-google-translate-base-url "https://translate.google.com/?source=gtx#")
-(require 'url-util)
-(defun chromium-translate ()
-  "Open google translate with chromium."
-  (interactive)
-  (if (use-region-p)
-      (let* ((val (buffer-substring-no-properties (region-beginning) (region-end)))
-             (asciip (string-match (format "\\`[%s]+\\'" my-google-translate-english-chars) val))
-             (targ (if asciip "en/ja/" "ja/en/")))
-        (deactivate-mark)
-        (browse-url-xdg-open (concat my-google-translate-base-url targ (url-hexify-string val))))
-    (let* ((val (read-string "Google Translate: "))
-           (asciip (string-match (format "\\`[%s]+\\'" my-google-translate-english-chars) val))
-           (targ (if asciip "en/ja/" "ja/en/")))
-      (browse-url-xdg-open (concat my-google-translate-base-url targ (url-hexify-string val))))))
-(global-set-key "\C-cT" 'chromium-translate)
-
-(when (require 'open-junk-file nil t)
-  (setq open-junk-file-format "~/orgdocs/%Y-%m%d-%H%M%S.")
-  (global-set-key "\C-xj" 'open-junk-file))
-
-(when (require 'editorconfig nil t)
-  (require 'editorconfig-core)
-  (set-variable 'editorconfig-exec-path "/usr/bin/editorconfig")
+;; editroconfig-core-c
+;; https://github.com/editorconfig/editorconfig-core-c/blob/master/INSTALL.md
+;; https://github.com/editorconfig/editorconfig-core-go
+(setup editorconfig
+  ;;(:opt editorconfig-exec-path "/usr/bin/editorconfig")
+  (:opt editorconfig-exec-path "/usr/local/bin/editorconfig.exe")
   (editorconfig-mode 1))
 
-(require 'org)
-(load "my-org-settings" t)
-
-;; (when (require 'helm-config nil t)
-;;   (global-set-key (kbd "C-;") 'helm-mini)
-;;   (global-set-key (kbd "M-r") 'helm-resume)
-;;   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
-;;   (global-set-key (kbd "C-x b") 'helm-buffers-list)
-
-;;   (helm-mode 1)
-
-;;   ;http://www49.atwiki.jp/ntemacs/m/pages/32.html
-;;   ;; 自動補完を無効に
-;;   (setq helm-ff-auto-update-initial-value nil)
-;;   ;; TAB で補完する
-;;   (define-key helm-read-file-map (kbd "<tab>") 'helm-execute-persistent-action)
-
-;;   (add-to-list 'helm-completing-read-handlers-alist '(find-file . nil))
-;;   (add-to-list 'helm-completing-read-handlers-alist '(write-file . nil))
-;;   (add-to-list 'helm-completing-read-handlers-alist '(insert-file . nil))
-
-;;   (when (require 'helm-ls-git nil t)))
-
-(let ((popwinp (require 'popwin nil t))
-      (direxp (require 'direx nil t)))
-  (when popwinp (popwin-mode 1))
-  (when direxp
-    (global-set-key (kbd "C-x C-j") 'direx:jump-to-directory-other-window)
-    (setq direx:leaf-icon "   "
-          direx:open-icon " - "
-          direx:closed-icon " + "))
-  (when (and popwinp direxp)
-    ;; direx:direx-modeのバッファをウィンドウ左辺に幅25でポップアップ
-    ;; :dedicatedにtを指定することで、direxウィンドウ内でのバッファの切り替えが
-    ;; ポップアップ前のウィンドウに移譲される
-    (push '(direx:direx-mode :position left :width 40 :dedicated t)
-          popwin:special-display-config)))
-
-(load "my-auto-insert" t)
-
-(when (require 'web-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.phtml$"     . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.tpl\\.php$" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.jsp$"       . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.as[cp]x$"   . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.erb$"       . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.html$"      . web-mode))
-  (defun my-web-mode-hook ()
-    "Hooks for Web mode."
-    (setq web-mode-markup-indent-offset 2)
-    (setq web-mode-css-indent-offset 2)
-    (setq web-mode-code-indent-offset 2))
-  (add-hook 'web-mode-hook 'my-web-mode-hook)
-  )
-
-;; (when (require 'emmet-mode nil t)
-;;   (add-hook 'emmet-mode-hook (lambda () (setq emmet-indentation 2)))
-;;   (dolist (hook (list
-;;                  'vue-mode-hook
-;;                  'sgml-mode-hook
-;;                  'css-mode-hook
-;;                  'web-mode-hook))
-;;     (add-hook hook (lambda ()
-;;                    (setq emmet-preview-default nil) ;don't show preview when expand code
-;;                    (emmet-mode)))))
-
-(when (require 'markdown-mode nil t)
-  (set-face-attribute 'markdown-code-face nil :inherit 'Default)
-  (autoload 'gfm-mode "markdown-mode"
-    "Major mode for editing GitHub Flavored Markdown files" t)
-  (add-to-list 'auto-mode-alist '("\\.md" . gfm-mode))
-  (add-to-list 'auto-mode-alist '("\\.markdown" . markdown-mode))
-  ;(add-to-list 'auto-mode-alist '("README\\.md" . gfm-mode))
-  ;(setq markdown-open-command "~/bin/opengrip.sh")
-  (setq markdown-command-needs-filename nil))
-
-(when (require 'scss-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
-  (add-hook 'scss-mode-hook
-            '(lambda ()
-               (setq scss-compile-at-save nil))))
-
-(when (require 'coffee-mode nil t)
-  (add-hook 'coffee-mode-hook
-            '(lambda ()
-               (setq tab-width 2)
-               (setq coffee-tab-width 2))))
-
-;; css-mode
-(setq cssm-indent-function #'cssm-c-style-indenter)
-(add-hook 'css-mode-hook
-          '(lambda ()
-             (setq css-indent-offset 2)))
-(add-to-list 'auto-mode-alist '("\\.css$" . css-mode))
-(setq cssm-indent-function #'cssm-c-style-indenter)
-
-;; (autoload 'auto-complete-mode "auto-complete" "AutoComplete mode" t)
-;; (eval-after-load 'auto-complete
-;;   '(progn
-;;      (add-to-list 'ac-dictionary-directories
-;;                   "/usr/share/emacs/etc/auto-complete/dict")
-;; ;     (dolist (hook '(css-mode-hook sass-mode-hook scss-mode-hook))
-;;      (dolist (hook '(css-mode-hook))
-;;        (add-hook hook 'ac-css-mode-setup))))
-
-(with-eval-after-load 'image-file
-  ;; Exclude .svg image from supported image list, as Emacs doesn't come
-  ;; with SVG shared library.
-  (setq image-file-name-extensions (remove "svg" image-file-name-extensions))
-  ;; Re-initialize the image-file handler.
-  (auto-image-file-mode t))
-
-;(load "view-mode-key" t)
-
-;;; eshell
-(setq eshell-output-filter-functions
-      (list 'eshell-handle-ansi-color
-            'eshell-handle-control-codes
-            'eshell-watch-for-password-prompt))
-(add-hook 'eshell-mode-hook 'ansi-color-for-comint-mode-on)
-
-;; cc-mode
-(add-hook 'c++-mode-hook
-          '(lambda ()
-             (c-set-style "Google")))
-(add-hook 'c-mode-hook
-          '(lambda ()
-             (c-set-style "linux")))
-
-(defconst my-java-style
-         '((c-basic-offset . 4) ; change
-           (tab-width . 4)
-           (indent-tabs-mode . nil)
-           (c-offsets-alist .
-                ((statement-block-intro . +)
-                 (knr-argdecl-intro     . 5)
-                 (substatement-open     . +)
-                 (label                 . 0)
-                 (case-label            . +)
-                 (statement-case-open   . +)
-                 (statement-cont        . +)
-                 (arglist-intro . +) ; change
-                 (arglist-close . 0) ; change
-                 (access-label  . 0)))
-           (c-echo-syntactic-information-p . t)
-           )
-         "My Java Style")
-
-(defconst my-java-style2
-         '((c-basic-offset . 4) ; change
-           (tab-width . 4)
-           (indent-tabs-mode . nil)
-           (c-offsets-alist .
-                ((inline-open           . 0)
-                 (inline-close          . 0)
-                 (class-open            . 0)
-                 (class-close           . 0)
-                 (inclass               . +)
-                 (inexpr-class          . 0)
-                 (statement-block-intro . +)
-                 (knr-argdecl-intro     . 5)
-                 (substatement-open     . 0)
-                 (label                 . 0)
-                 (case-label            . +)
-                 (statement-case-open   . +)
-                 (statement-cont        . +)
-                 (arglist-intro . +) ; change
-                 (arglist-close . 0) ; change
-                 (access-label  . 0)))
-           (c-echo-syntactic-information-p . t)
-           )
-         "My Java Style2")
-
-;;; java-mode-indent-annotations
-;(require 'java-mode-indent-annotations)
-(add-hook 'java-mode-hook
-          '(lambda ()
-             ;;(gtags-mode 1)
-             (c-add-style "my-java-style2" my-java-style2 t)
-             (c-set-style "my-java-style2")))
-             ;(java-mode-indent-annotations-setup)))
-
-;;; global(gtags)
-(add-hook 'gtags-mode-hook
-          '(lambda ()
-             (setq gtags-pop-delete t)
-             (setq gtags-path-style 'absolute)
-             (local-set-key "\M-t" 'gtags-find-tag)
-             (local-set-key "\M-r" 'gtags-find-rtag)
-             (local-set-key "\M-s" 'gtags-find-symbol)
-             (local-set-key "\C-t" 'gtags-pop-stack)))
-;Ctrl+t gtagsでジャンプする一つ前の状態に戻る
-;Alt+s 指定した変数、定義の定義元を探す
-;Alt+r 指定した関数が参照されている部分を探す
-;Alt+t 指定した関数が定義されている部分をさがす
-;gtags -v
-;htags -saF ->html化
-
-(add-hook 'gtags-select-mode-hook
-          '(lambda ()
-             (setq hl-line-face 'underline)
-             (hl-line-mode 1)))
-
-;;; text mode
-(add-hook 'text-mode-hook
-          '(lambda ()
-             ;; 76文字幅でオートインデント
-             (set-fill-column 76)))
-
-;; (add-hook 'python-mode-hook
-;;           '(lambda ()
-;;              (jedi:setup)
-;;              (setq indent-tabs-mode nil)))
-;; (setq jedi:setup-keys t)
-;; (setq jedi:complete-on-dot t)
-;; (autoload 'jedi:setup "jedi" nil t)
-
-;; (when (require 'flycheck-pos-tip nil t)
-;;   (with-eval-after-load 'flycheck
-;;     (flycheck-pos-tip-mode)))
-(when (require 'flycheck-posframe nil t)
-  (add-hook 'flycheck-mode-hook #'flycheck-posframe-mode))
-
-(when (require 'flycheck nil t)
-  (global-flycheck-mode))
-
-(add-hook 'python-mode-hook
-          '(lambda ()
-             (setq indent-tabs-mode nil)))
-
-(with-eval-after-load 'company
-  ;(setq company-auto-complete nil)
-  ;(setq company-transformers '(company-sort-by-backend-importance))
-  (setq company-transformers '(company-sort-by-statistics))
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 2)
-  (setq company-selection-wrap-around t)
-  (setq completion-ignore-case t)
-  (setq company-dabbrev-downcase nil)
-  (global-set-key (kbd "C-M-i") 'company-complete)
-  (define-key company-active-map (kbd "C-n") 'company-select-next)
-  (define-key company-active-map (kbd "C-p") 'company-select-previous)
-  (define-key company-active-map [tab] 'company-complete-selection)
-  (define-key company-active-map (kbd "C-h") nil)
-  (define-key company-active-map (kbd "C-S-h") 'company-show-doc-buffer)
-  (when (eq system-type 'windows-nt)
-      (setq company-clang-executable "c:/Program Files/LLVM/bin/clang++.exe"))
-  )
-(when (require 'company nil t)
-  (global-company-mode))
-(when (require 'company-statistics nil t)
-  (company-statistics-mode))
-(when (require 'company-posframe nil t)
-  (company-posframe-mode 1))
-
-(when (require 'projectile nil t)
-  (setq projectile-enable-caching t)
-  (projectile-global-mode))
-
-(when (require 'google-c-style nil t)
-  (defun cc-mode-init ()
-    (google-set-c-style))
-;;;;; clang-format -dump-config -style=Google > .clang-format
-;;;;; NamespaceIndentation: All
-;;;;; IndentWidth: 2
-;;;;; TabWidth: 2
-  (add-hook 'c-mode-hook #'cc-mode-init)
-  (add-hook 'c++-mode-hook #'cc-mode-init))
-
-(when (require 'lsp-mode nil t)
-  (setq lsp-enable-indentation nil)
-  (setq lsp-modeline-diagnostics-enable t)
-  ;(require 'lsp-clients)
-  (add-hook 'python-mode-hook #'lsp)
-  (defun cc-mode-ccls ()
-    (when (require 'ccls nil t)
-      (if (eq system-type 'windows-nt)
-          (setq ccls-executable "c:/Users/admin/work/ccls/ccls.exe")
-        (setq ccls-executable "/usr/bin/ccls")))
-    (lsp))
-  (add-hook 'c-mode-hook #'cc-mode-ccls)
-  (add-hook 'c++-mode-hook #'cc-mode-ccls)
-  (add-hook 'objc-mode-hook #'cc-mode-ccls)
-  (when (require 'lsp-ui nil t)
-    (setq lsp-ui-doc-header nil)
-    (setq lsp-ui-doc-border "violet")
-    (setq lsp-ui-sideline-update-mode 'point)
-    (setq lsp-ui-sideline-delay 1)
-    (setq lsp-ui-sideline-ignore-duplicate t)
-    (setq lsp-ui-peek-always-show t)
-    (setq lsp-ui-flycheck-enable t)
-    (add-hook 'lsp-mode-hook #'lsp-ui-mode))
-  (when (require 'company nil t)
-    (when (require 'company-lsp nil t)
-      (push 'company-lsp company-backends))))
-
-(when (require 'go-mode nil t)
-  (when (require 'lsp-mode nil t)
-    (add-hook 'go-mode-hook #'lsp))
-  (define-key go-mode-map (kbd "C-c C-j") 'go-direx-pop-to-buffer)
-  (add-hook 'go-mode-hook
-            (lambda ()
-              (setq indent-tabs-mode t)))
-  (add-hook 'before-save-hook #'lsp-format-buffer nil 't))
-  ;(add-hook 'before-save-hook 'lsp-format-buffer nil 'local))
-
-(when (require 'rust-mode nil t)
-  (when (require 'lsp-mode nil t)
-    (add-hook 'rust-mode-hook #'lsp)
-    (define-key rust-mode-map (kbd "C-c h") 'lsp-describe-thing-at-point))
-  (when (require 'cargo nil t)
-    (add-hook 'rust-mode-hook #'cargo-minor-mode)))
-
-(when (require 'company-mode nil t)
-  (define-key company-active-map (kbd "<backtab>") 'company-select-previous)
-  (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle))
-
-(require 'toml-mode nil t)
-
-(when (require 'yaml-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode)))
-
-;(require 'vue-mode nil t)
-
-(when (require 'protobuf-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode)))
-
-(when (require 'js2-mode nil t)
-  (autoload 'ac-js2-mode "ac-js2" nil t)
-  (add-hook 'js2-mode-hook 'ac-js2-mode)
-  (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode)))
-
-(autoload 'qml-mode "qml-mode" "Editing Qt Declarative." t)
-(add-to-list 'auto-mode-alist '("\\.qml$" . qml-mode))
-
-(autoload 'ebuild-mode "ebuild-mode"
-  "Major mode for Portage .ebuild and .eclass files." t)
-(autoload 'gentoo-newsitem-mode "gentoo-newsitem-mode"
-  "Major mode for Gentoo GLEP 42 news items." t)
-(autoload 'glep-mode "glep-mode"
-  "Major mode for Gentoo Linux Enhancement Proposals." t)
-
-(add-to-list 'auto-mode-alist '("\\.\\(ebuild\\|eclass\\)\\'" . ebuild-mode))
-(add-to-list 'auto-mode-alist
-	     '("/[0-9]\\{4\\}-[01][0-9]-[0-3][0-9]-.+\\.[a-z]\\{2\\}\\.txt\\'"
-	       . gentoo-newsitem-mode))
-(add-to-list 'auto-mode-alist '("/glep.*\\.rst\\'" . glep-mode))
-(add-to-list 'interpreter-mode-alist '("openrc-run" . sh-mode))
-(add-to-list 'interpreter-mode-alist '("runscript" . sh-mode))
-(modify-coding-system-alist 'file "\\.\\(ebuild\\|eclass\\)\\'" 'utf-8)
-
-;(load "with-editor-autoloads")
-;(load "ghub-autoloads")
-;(load "magit-popup-autoloads")
-;(load "magit-autoloads")
-
-(require 'powershell nil t)
-(autoload 'bat-mode "bat-mode" "batch file mode." t)
-(add-to-list 'auto-mode-alist '("\\.\\(cmd\\|bat\\)$" . bat-mode))
-
-(when (require 'cmake-mode nil t)
-  (when (eq system-type 'windows-nt)
-    (setenv "PATH" (concat (getenv "PROGRAMFILES") "(x86)\\CMake\\bin;" (getenv "PATH")))))
-
-(when (require 'git-gutter+ nil t)
- (global-git-gutter+-mode t)
- (global-set-key (kbd "C-x g") 'git-gutter+-mode) ; Turn on/off in the current buffer
- (global-set-key (kbd "C-x G") 'global-git-gutter+-mode) ; Turn on/off globally
-
- (eval-after-load 'git-gutter+
-   '(progn
-   ;;; Jump between hunks
-      (define-key git-gutter+-mode-map (kbd "C-x n") 'git-gutter+-next-hunk)
-      (define-key git-gutter+-mode-map (kbd "C-x p") 'git-gutter+-previous-hunk)
-
-   ;;; Act on hunks
-      (define-key git-gutter+-mode-map (kbd "C-x v =") 'git-gutter+-show-hunk)
-      (define-key git-gutter+-mode-map (kbd "C-x r") 'git-gutter+-revert-hunks)
-      ;; Stage hunk at point.
-      ;; If region is active, stage all hunk lines within the region.
-      (define-key git-gutter+-mode-map (kbd "C-x t") 'git-gutter+-stage-hunks)
-      (define-key git-gutter+-mode-map (kbd "C-x c") 'git-gutter+-commit)
-      (define-key git-gutter+-mode-map (kbd "C-x C") 'git-gutter+-stage-and-commit)
-      (define-key git-gutter+-mode-map (kbd "C-x C-y") 'git-gutter+-stage-and-commit-whole-buffer)
-      (define-key git-gutter+-mode-map (kbd "C-x U") 'git-gutter+-unstage-whole-buffer))))
-
-(when (require 'quickrun nil t)
-  ;; 結果の出力バッファと元のバッファを行き来したい場合は
-  ;; ':stick t'の設定をするとよいでしょう
-  (push '("*quickrun*") popwin:special-display-config)
-  ;; よく使うならキーを割り当てるとよいでしょう
-  (global-set-key (kbd "<f5>") 'quickrun))
-
-(when (require 'migemo nil t)
-  (if (eq system-type 'windows-nt)
-      ;; Windows
-      (progn
-        (setq migemo-command "c:/msys64/usr/local/bin/cmigemo.exe")
-        (setq migemo-options '("-q" "--emacs" "-i" "\a"))
-        (setq migemo-dictionary "c:/msys64/usr/local/share/migemo/utf-8/migemo-dict")
-        (setq migemo-user-dictionary nil)
-        (setq migemo-regex-dictionary nil)
-        (setq migemo-coding-system 'utf-8-unix)
-        (migemo-init))
-    ;; Windows以外
-    (progn
-      (setq migemo-command "cmigemo")
-      (setq migemo-options '("-q" "--emacs"))
-      (setq migemo-dictionary "/usr/share/migemo/migemo-dict")
-      (setq migemo-user-dictionary nil)
-      (setq migemo-regex-dictionary nil)
-      (setq migemo-coding-system 'utf-8-unix)
-      (migemo-init))))
-
-;;;https://truongtx.me/2014/08/23/setup-emacs-as-an-sql-database-client/
-(add-hook 'sql-interactive-mode-hook
-          (lambda ()
-            (toggle-truncate-lines t)))
-
-(setq sql-connection-alist
-      '((xxxxdb (sql-product 'postgres)
-               (sql-port 5432)
-               (sql-server "localhost")
-               (sql-user "xxxxuser")
-               (sql-password "xxxx")
-               (sql-database "xxxxdb"))))
-
-(defun my-sql-connect (product connection)
-  ;; remember to set the sql-product, otherwise, it will fail for the first time
-  ;; you call the function
-  (setq sql-product product)
-  (sql-connect connection))
-
-(defun my-sql-xxxdb ()
-  (interactive)
-  (my-sql-connect 'postgres 'xxxxdb))
-
-
-(defun open-file-dwim (filename)
-  "Open fileInfo dwim"
-  (let *((winp (eq system-type 'windows-nt))
-         (opener (if (file-directory-p filename)
-                     (if winp '("explorer.exe") '("gnome-open"))
-                   (if winp '("gnome-open"))))
-         (fn (replace-regexp-in-string "/$" "" filename))
-         (args (append opener (list (if winp
-                                        (replace-regexp-in-string "/" (rx "\\") fn)))))
-         (process-connection-type nil))
-       (apply 'start-process "open-file-dwim" nil args)))
-
-(defun dired-open-dwim ()
-  "Open file under the cursor"
-  (interactive)
-  (open-file-dwim (dired-get-filename)))
-
-(defun dired-open-here ()
-  "Open current directory"
-  (interactive)
-  (open-file-dwim (expand-file-name dired-directory)))
-
-(add-hook 'dired-mode-hook
-          (lambda ()
-            (define-key dired-mode-map (kbd "C-c o") 'dired-open-dwim)
-            (define-key dired-mode-map (kbd "C-c .") 'dired-open-here)))
-
-;; (defun exec-filemanager ()
-;;   (interactive)
-;;   (let ((process-connection-type nil))
-;;     (start-process "nautilus" nil "/usr/bin/nautilus"
-;;                    (or (file-name-directory buffer-file-name)
-;;                        default-directory))))
-(defun exec-filemanager ()
-  (interactive)
-  (call-process "nautilus" nil 0 nil
-                (or (file-name-directory buffer-file-name)
-                    default-directory)))
-
-(defalias 'nau 'exec-filemanager)
-
-(if (require 'comment-dwim-2 nil t)
-    (global-set-key (kbd "M-;") 'comment-dwim-2)
-  (setq comment-dwim-2--inline-comment-behavior 'reindent-comment))
-
-(if (require 'smartparens nil t)
-    (smartparens-global-mode t)
-  (electric-pair-mode t))
-
-(show-paren-mode 1)
+;; (setopt editorconfig-exec-path "c:/msys64/usr/local/bin/editorconfig.exe")
+;; (editorconfig-mode 1)
+
+(savehist-mode 1)
+
+;; (use-package f :demand t)
+(setup f
+  (:elpaca t))
+;; As this is asynchronous let's call `elpaca-await` to ensure that f.el
+;; is available for use in my emacs configuration
+(elpaca-wait)
+
+(setup comment-dwim-2
+  (:elpaca comment-dwim-2 :host github :repo "remyferre/comment-dwim-2")
+  (:opt comment-dwim-2--inline-comment-behavior 'reindent-comment)
+  (:with-map org-mode-map
+    (:bind
+     "M-;" org-comment-dwim-2))
+  (:global
+   "M-;" comment-dwim-2))
+
+(setup expand-region
+  (:elpaca expand-region :host github :repo "magnars/expand-region.el")
+  (:global
+   "C-=" er/expand-region))
+
+;; https://emacs.liujiacai.net/post/038-hello-treesitter/
+;; https://github.com/emacs-tree-sitter/elisp-tree-sitter/issues/20
+
+;; (setup smartparens
+;;   (:elpaca smartparens :host github :repo "Fuco1/smartparens")
+;;   (:with-mode (sh-mode
+;;                js-mode
+;;                text-mode
+;;                markdown-mode
+;;                latex-mode
+;;                go-mode
+;;                html-mode
+;;                rst-mode
+;;                rust-mode
+;;                python-ts-mode
+;;                cc-mode
+;;                c-ts-mode
+;;                org-mode)
+;;     (:hook smartparens-mode))
+;;   (require 'smartparens-config))
+
+(setup puni
+  (:elpaca puni :host github :repo "AmaiKinono/puni")
+  (puni-global-mode))
 
 ;; バッファ自動読み込み
 (global-auto-revert-mode 1)
 
-(setq backup-inhibited t)
-(setq make-backup-files nil)
+;; 行末のスペースやタブの可視化
+;(setq-default show-trailing-whitespace t)
 
-;; place backup files here, rather than sprinkling them everywhere.
-;; https://github.com/josteink/emacs-oob-reboot/issues/25
-(setq backup-directory-alist
-      `((".*" . ,(expand-file-name
-                  (concat user-emacs-directory "backups")))))
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
+(setup flycheck
+  (:elpaca flycheck :host github :repo "flycheck/flycheck")
+  (global-flycheck-mode))
 
-(setq delete-auto-save-files t)
+;; dprint
+;; npm install -g dprint
+;; pnpm add -D dprint
 
-(setq backup-by-copying t)
+;; https://apribase.net/2024/06/10/emacs-reformatter/
+;; yamlfmt
+;; go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+;; https://github.com/google/yamlfmt
+;; shfmt
+;; go install mvdan.cc/sh/v3/cmd/shfmt@latest
+;; https://github.com/mvdan/sh
 
-(column-number-mode t)
-(line-number-mode t)
+(setup reformatter
+  (:elpaca t)
+  (reformatter-define cljstyle
+    :program "cljstyle" :args '("pipe"))
+  (reformatter-define dprint
+    :program "dprint" :args `("fmt" "--stdin" ,buffer-file-name))
+  (reformatter-define fish_indent
+    :program "fish_indent" :args '("-"))
+  (reformatter-define nixfmt
+    :program "nixfmt" :args '("-"))
+  (reformatter-define shfmt
+    :program "shfmt" :args `("--indent" ,(number-to-string sh-basic-offset) "-"))
+  (reformatter-define stylua
+    :program "stylua" :args `("-" "--indent-type=Spaces" ,(format "--indent-width=%s" lua-indent-level)))
+  (reformatter-define ruff
+    :program "ruff" :args `("format" "--stdin-filename" ,buffer-file-name "-"))
+  (reformatter-define rufo
+    :program "rufo")
+  (reformatter-define taplo
+    :program "taplo" :args '("fmt"))
+  (reformatter-define yamlfmt
+    :program "yamlfmt" :args '("-in")))
 
-(auto-compression-mode t)
+;; https://github.com/hrsh7th/vscode-langservers-extracted
+;; npm -g install nexe
+;; nexe -i server.js -o yaml-language-server.exe -t windows-x64-14.15.3
+;;
+;; svelteserver
+;; vscode-css-language-server
+;; vscode-json-language-server
+;; vscode-markdown-language-server
+;; vscode-eslint-language-server
+;; typescript-language-server
+;; tsserver
+;; windowsではvoltaを使ってインストール
+;; c:/Users/[username]/AppData/Local/Volta/bin
+;; https://zenn.dev/longrun_jp/articles/volta-node-corepack-pnpm
+;;
+;; https://github.com/golang/tools/gopls
+;;
+;; Svelte
+;; https://qiita.com/akirak/items/11dafdf89e32d34f3fc9
 
-(which-function-mode 1)
+(setup eglot
+  (:with-mode (python-mode
+               html-mode)
+    (:hook eglot-ensure))
+  (:opt eglot-sync-connect 3
+        eglot-connect-timeout 30
+        eglot-autoshutdown t
+        eglot-send-changes-idle-time 0.5
+        eglot-events-buffer-size 0
+        eglot-report-progress nil
+        eglot-ignored-server-capabilities '(:documentHighlightProvider
+                                            :foldingRangeProvider)
+        ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
+        ;;      its popup rule causes eglot to steal focus too often.
+        eglot-auto-display-help-buffer nil
+        eglot-report-progress nil)
+  (:when-loaded
+    (dolist (pair '((svelte-mode . ("svelteserver" "--stdio"))
+                    (css-mode . ("vscode-css-language-server" "--stdio"))
+                    (css-ts-mode . ("vscode-css-language-server" "--stdio"))
+                    (json-ts-mode . ("vscode-json-language-server" "--stdio"))
+                    (yaml-ts-mode . ("yaml-language-server" "--stdio"))))
+      (add-to-list 'eglot-server-programs pair))))
 
-(auto-image-file-mode t)
+(setup eglot-booster
+  (:elpaca eglot-booster :host github :repo "jdtsmith/eglot-booster")
+  (eglot-booster-mode))
 
-(mouse-wheel-mode t)
+(setup flycheck-eglot
+  (:elpaca flycheck-eglot :host github :repo "flycheck/flycheck-eglot")
+  (:load-after flycheck eglot)
+  (global-flycheck-eglot-mode 1))
 
-(setq tramp-default-method "scp")
+(setup flycheck-posframe
+  (:elpaca flycheck-posframe :host github :repo "alexmurray/flycheck-posframe")
+  (:with-hook flycheck-mode
+    (:hook flycheck-posframe-mode)))
 
-(setq ring-bell-function 'ignore)
+;; https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
+;; https://apribase.net/2024/06/12/emacs-treesit-ts-mode/
+;; https://erick.navarro.io/blog/moving-to-emacs-tree-sitter-modes/
+;; https://repo.msys2.org/mingw/ucrt64/
 
-(when window-system
-  (require 'server)
-  (unless (eq (server-running-p) 't)
-    (server-start)))
+;; https://github.com/iquiw/emacs-tree-sitter-module-dll
+;; git clone --recursive
+;; mkdir -p dist/licenses
+;; bash ./build.sh go UCRT64 dist
+
+;; treesit-extra-load-path
+
+;; https://github.com/camdencheek/tree-sitter-go-mod
+;; go-ts-mode go-mod-ts-mode
+
+;; 
+(setup treesit
+  (:option treesit-font-lock-level 4
+           treesit-extra-load-path '("c:/msys64/home/igarashi/emacs-tree-sitter-module-dll/dist"))
+  )
+;;          treesit-language-source-alist
+;;          '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+;;             (clojure "https://github.com/sogaiu/tree-sitter-clojure")
+;;             (cmake "https://github.com/uyha/tree-sitter-cmake")
+;;             (css "https://github.com/tree-sitter/tree-sitter-css")
+;;             (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+;;             (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+;;             (go "https://github.com/tree-sitter/tree-sitter-go")
+;;             (html "https://github.com/tree-sitter/tree-sitter-html")
+;;             (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+;;             (json "https://github.com/tree-sitter/tree-sitter-json")
+;;             (make "https://github.com/alemuller/tree-sitter-make")
+;;             (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+;;             (nix "https://github.com/nix-community/tree-sitter-nix")
+;;             (python "https://github.com/tree-sitter/tree-sitter-python")
+;;             (rust "https://github.com/tree-sitter/tree-sitter-rust")
+;;             (toml "https://github.com/tree-sitter/tree-sitter-toml")
+;;            (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+;;            (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+;;            (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+;; (mapc (lambda (lang)
+;;         (unless (treesit-language-available-p lang nil)
+;;           (treesit-install-language-grammar lang)))
+;;       (mapcar #'car treesit-language-source-alist)))
+
+;; https://github.com/zbelial/treesitter-context.el
+
+(setup go-ts-mode
+  (:file-match "\\.go\\'")
+  (:hook eglot-ensure))
+
+(setup go-mod-ts-mode
+  (:file-match "go.mod\\'"))
+
+(setup css-ts-mode
+  (:mode-remap css-mode)
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup js-ts-mode
+  (:mode-remap javascript-mode)
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup typescript-ts-mode
+  (:file-match "\\.tsx\\'")
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup json-ts-mode
+  (:file-match "\\.jsonc?\\'")
+  (:option js-indent-level 2)
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup yaml-ts-mode
+  (:file-match "\\.ya?ml\\'")
+  (:hook yamlfmt-on-save-mode
+         eglot-ensure))
+
+(setup toml-ts-mode
+  (:mode-remap conf-toml-mode)
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup bash-ts-mode
+ (:mode-remap sh-mode)
+ (:option sh-basic-offset 2)
+ (:hook shfmt-on-save-mode
+        eglot-ensure))
+
+;; (setup dockerfile-mode
+;;   (:elpaca t)
+;;   (:hook dprint-on-save-mode
+;;          eglot-ensure))
+
+(setup dockerfile-ts-mode
+  (:file-match "[/\\]\\(?:Containerfile\\|Dockerfile\\)\\(?:\\.[^/\\]*\\)?\\'")
+  (:hook dprint-on-save-mode
+         eglot-ensure))
+
+(setup rust-mode
+  (:elpaca t)
+  (:option rust-format-on-save t
+           rust-mode-treesitter-derive t)
+  (:hook eglot-ensure))
+
+;; https://mickey-happygolucky.hatenablog.com/entry/2021/08/25/221924 表
+;; C-c C-h ヘルプ
+;; https://jblevins.org/projects/markdown-mode/
+;; https://qiita.com/tadsan/items/7bb0099479f647d2c106
+
+;; (setup markdown-mode
+;;   (:elpaca markdown-mode :host github :repo "jrblevin/markdown-mode")
+;;   (:opt auto-mode-alist (cons '("\\.md\\'" . gfm-mode) auto-mode-alist)))
+
+;; https://github.com/simonhaenisch/md-to-pdf
+;; https://github.com/elliotblackburn/mdpdf
+;; https://github.com/led-mirage/Markdown-PDF-Guide
+;; https://github.com/sindresorhus/github-markdown-css
+;; "white-space: pre;" を "white-space: pre-wrap;" に変更する（変更しないとプログラムコードが途中で途切れる）
+;; https://zenn.dev/takanori_is/articles/md-to-pdf-with-marked-custom-heading-id
+;; https://zenn.dev/ebang/articles/231106_emacs-markdown
+
+(setup edit-indirect
+  (:elpaca edit-indirect :host github :repo "Fanael/edit-indirect"))
+
+(setup visual-line-mode
+  (:hook word-wrap-whitespace-mode))
+
+(setup word-wrap-mode
+  (:when-loaded
+   (add-to-list 'word-wrap-whitespace-characters ?\])))
+
+(setup visual-fill-column
+  (:elpaca t)
+  (:opt visual-fill-column-width 80
+        visual-line-fringe-indicators '(left-curly-arrow nil)))
+
+(setup adaptive-wrap
+  (:elpaca t))
+
+(setup gfm-mode
+  (:file-match "\\.md\\'")
+  (:elpaca markdown-mode :host github :repo "jrblevin/markdown-mode")
+  (:option markdown-command "md-to-pdf --as-html --config-file .emacs.d/md2html.js"
+           markdown-open-command "~/.emacs.d/mdopen.bat"
+           markdown-fontify-code-blocks-natively t
+           markdown-indent-on-enter 'indent-and-new-item)
+  (:hook turn-off-auto-fill
+         turn-on-visual-line-mode
+         visual-fill-column-mode
+         adaptive-wrap-prefix-mode))
+
+(which-key-mode 1)
+
+;; https://a.conao3.com/blog/2024/7c7c265/
+;; https://apribase.net/2024/07/27/modern-emacs-2024/
+;; https://qiita.com/nobuyuki86/items/122e85b470b361ded0b4
+;; https://emacs.takeokunn.org/
 
 (cd "~/")
+
+;; https://qiita.com/nobuyuki86/items/122e85b470b361ded0b4
+;; https://zenn.dev/takeokunn/articles/56010618502ccc
+;; https://gitlab.com/jdm204/dotfiles/-/blob/master/config.org
+;; https://www.patrickdelliott.com/emacs.d/
+;; https://apribase.net/2024/05/29/emacs-elpaca-setup-el/
+;; https://www.grugrut.net/posts/my-emacs-init-el/
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ignored-local-variable-values '((lexical-bindings . t))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
