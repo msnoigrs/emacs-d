@@ -289,31 +289,31 @@ The ORDER can be used to deduce the feature context."
 (global-set-key (kbd "C-c C-e") 'eval-and-replace)
 
 ;; https://github.com/pseudonamed/.emacs.d/blob/master/init.el
-(defun smarter-move-beginning-of-line (arg)
-  "Move point back to indentation of beginning of line.
+;; (defun smarter-move-beginning-of-line (arg)
+;;   "Move point back to indentation of beginning of line.
 
-Move point to the first non-whitespace character on this line.
-If point is already there, move to the beginning of the line.
-Effectively toggle between the first non-whitespace character and
-the beginning of the line.
+;; Move point to the first non-whitespace character on this line.
+;; If point is already there, move to the beginning of the line.
+;; Effectively toggle between the first non-whitespace character and
+;; the beginning of the line.
 
-If ARG is not nil or 1, move forward ARG - 1 lines first.  If
-point reaches the beginning or end of the buffer, stop there."
-  (interactive "^p")
-  (setq arg (or arg 1))
+;; If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+;; point reaches the beginning or end of the buffer, stop there."
+;;   (interactive "^p")
+;;   (setq arg (or arg 1))
 
-  ;; Move lines first
-  (when (/= arg 1)
-    (let ((line-move-visual nil))
-      (forward-line (1- arg))))
+;;   ;; Move lines first
+;;   (when (/= arg 1)
+;;     (let ((line-move-visual nil))
+;;       (forward-line (1- arg))))
 
-  (let ((orig-point (point)))
-    (back-to-indentation)
-    (when (= orig-point (point))
-      (move-beginning-of-line 1))))
+;;   (let ((orig-point (point)))
+;;     (back-to-indentation)
+;;     (when (= orig-point (point))
+;;       (move-beginning-of-line 1))))
 
-;; remap C-a to `smarter-move-beginning-of-line'
-(global-set-key "\C-a" 'smarter-move-beginning-of-line)
+;; ;; remap C-a to `smarter-move-beginning-of-line'
+;; (global-set-key "\C-a" 'smarter-move-beginning-of-line)
 
 ;; Auto complile a lisp buffer if one doesn't already exist
 (defun auto-recompile-el-buffer ()
@@ -323,12 +323,12 @@ point reaches the beginning or end of the buffer, stop there."
     (byte-compile-file buffer-file-name)))
 (add-hook 'after-save-hook 'auto-recompile-el-buffer)
 
-;; (defun untabify-buffer ()
-;;   (interactive)
-;;   (untabify 1 (point-max))
-;;   (if (not (eq major-mode 'mew-draft-mode))
-;;       ;; delete-trailing-whitespace does not work in mew-draft-mode.
-;;       (delete-trailing-whitespace)))
+(defun untabify-buffer ()
+  (interactive)
+  (untabify 1 (point-max))
+  (if (not (eq major-mode 'mew-draft-mode))
+      ;; delete-trailing-whitespace does not work in mew-draft-mode.
+      (delete-trailing-whitespace)))
 
 (if (not (fboundp 'defun-if-undefined))
     (defmacro defun-if-undefined (name &rest rest)
@@ -362,6 +362,12 @@ point reaches the beginning or end of the buffer, stop there."
 
 (setopt frame-title-format (format "emacs@%s : %%f" (system-name)))
 
+(setup mwim
+  (:elpaca mwim :host github :repo "alezost/mwim.el")
+  (:global
+   "C-a" mwim-beginning
+   "C-e" mwim-end))
+
 ;; editroconfig-core-c
 ;; https://github.com/editorconfig/editorconfig-core-c/blob/master/INSTALL.md
 ;; https://github.com/editorconfig/editorconfig-core-go
@@ -380,7 +386,7 @@ point reaches the beginning or end of the buffer, stop there."
   (:elpaca t))
 ;; As this is asynchronous let's call `elpaca-await` to ensure that f.el
 ;; is available for use in my emacs configuration
-(elpaca-wait)
+;; (elpaca-wait)
 
 (setup comment-dwim-2
   (:elpaca comment-dwim-2 :host github :repo "remyferre/comment-dwim-2")
@@ -399,24 +405,6 @@ point reaches the beginning or end of the buffer, stop there."
 ;; https://emacs.liujiacai.net/post/038-hello-treesitter/
 ;; https://github.com/emacs-tree-sitter/elisp-tree-sitter/issues/20
 
-;; (setup smartparens
-;;   (:elpaca smartparens :host github :repo "Fuco1/smartparens")
-;;   (:with-mode (sh-mode
-;;                js-mode
-;;                text-mode
-;;                markdown-mode
-;;                latex-mode
-;;                go-mode
-;;                html-mode
-;;                rst-mode
-;;                rust-mode
-;;                python-ts-mode
-;;                cc-mode
-;;                c-ts-mode
-;;                org-mode)
-;;     (:hook smartparens-mode))
-;;   (require 'smartparens-config))
-
 (setup puni
   (:elpaca puni :host github :repo "AmaiKinono/puni")
   (puni-global-mode))
@@ -426,6 +414,162 @@ point reaches the beginning or end of the buffer, stop there."
 
 ;; 行末のスペースやタブの可視化
 ;(setq-default show-trailing-whitespace t)
+
+;; (setup git-commit
+;;   (:elpaca t))
+
+;; (setup git-gutter+
+;;   (:elpaca t)
+;;   (global-git-gutter+-mode))
+
+(setup transient
+  (:elpaca transient :host github :repo "magit/transient"))
+
+(setup magit
+  (:elpaca magit :host github :repo "magit/magit")
+  (:load-after transient))
+
+(setup diff-hl
+  (:elpaca t)
+  (:with-mode dired-mode
+    (:hook diff-hl-dired-mode))
+  (:with-mode magit-pre-refresh
+    (:hook diff-hl-magit-pre-refresh))
+  (:with-mode magit-post-refresh
+    (:hook diff-hl-magit-post-refresh))
+  (global-diff-hl-mode +1)
+  (diff-hl-flydiff-mode +1)
+  (global-diff-hl-show-hunk-mouse-mode +1))
+
+(setup spacious-padding
+  (:elpaca t)
+  (:option spacious-padding-widths
+           '(:internal-border-width 8
+                                    :header-line-width 4
+                                    :mode-line-widht 0
+                                    :tab-width 4
+                                    :right-divider-width 0
+                                    :scroll-bar-width 8
+                                    :left-fringe-width 4
+                                    :right-fringe-width 8))
+  (spacious-padding-mode 1))
+
+;; https://www.grugrut.net/posts/202408192021/
+(setup corfu
+  (:elpaca corfu :host github :repo "minad/corfu")
+  (:opt corfu-auto t
+        corfu-auto-delay 0.3
+        corfu-auto-prefix 2
+        corfu-cycle t
+        corfu-quit-at-boundary 'separator
+        corfu-quit-no-match t
+        corfu-preselect 'valid
+        corfu-on-exact-match nil)
+  (:option text-mode-ispell-word-completion nil
+           tab-always-indent 'complete)
+  (defun corfu-beginning-of-prompt()
+    "Move to beginning of completion input."
+    (interactive)
+    (corfu--goto -1)
+    (goto-char (car completion-in-region--data)))
+  (defun corfu-end-of-prompt()
+    "Move to end of completion input."
+    (interactive)
+    (corfu--goto -1)
+    (goto-char (cadr completion-in-region--data)))
+  (:with-map corfu-map
+    (:bind
+     ;; "<remap> <move-beginning-of-line>" corfu-beginning-of-prompt
+     ;; "<remap> <move-end-of-line" corfu-end-of-prompt
+     "TAB" corfu-insert
+     "<tab>" corfu-insert
+     "RET" nil
+     "<return>" nil))
+  (global-corfu-mode)
+  (corfu-popupinfo-mode +1))
+
+(setup cape
+  (:elpaca cape :host github :repo "minad/cape")
+  (:opt cape-dabbrev-min-length 2))
+
+(setup orderless
+  (:elpaca orderless :host github :repo "oantolin/orderless")
+  (:option completion-style '(orderless basic)
+           completion-category-defaults nil
+           completion-category-overrides nil)
+  (:with-hook corfu-mode-hook
+    (:hook (lambda ()
+             (setq-local orderless-matching-styles '(orderless-flex)))))
+  (defun orderless-migemo (component)
+    (let ((pattern (downcase (migemo-get-pattern component))))
+      (condition-case nil
+          (progn (string-match-p pattern "") pattern)
+        (invalid-regexp nil))))
+  (:when-loaded
+    (add-to-list 'orderless-matching-styles 'orderless-migemo)))
+
+(setup prescient
+  (:elpaca prescient :host github :repo "radian-software/prescient.el")
+  (:opt prescient-aggressive-file-save t
+        prescient-persist-mode t))
+
+(setup corfu-prescient
+  (:elpaca corfu-prescient :host github :repo "radian-software/prescient.el")
+  (:load-after corfu orderless)
+  (:option corfu-prescient-enable-filterring nil)
+  (:opt corfu-prescient-mode t))
+
+(setup kind-icon
+  (:elpaca kind-icon :host github :repo "jdtsmith/kind-icon")
+  (:load-after corfu)
+  (:opt kind-icon-default-face 'corfu-default)
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+(setup corfu-terminal
+  (:elpaca corfu-terminal :host "codeberg.org" :repo "https://codeberg.org/akib/emacs-corfu-terminal.git")
+  (unless (display-graphic-p)
+    (corfu-terminal-mode +1)))
+
+;; https://qiita.com/nobuyuki86/items/7c65456ad07b555dd67d
+
+(setup tempel
+  (:elpaca tempel :host github :repo "minad/tempel")
+  (:global
+   "M-+" tempel-complete
+   "M-*" tempel-insert)
+  (defun tempel-setup-capf(&optional arg)
+    (setq-local completion-at-point-functions
+                (list
+                 (cape-capf-noninterruptible
+                  (cape-capf-buster
+                   (cape-capf-properties
+                    (cape-capf-super
+                     (if arg
+                         arg
+                       (car completion-at-point-functions))
+                     #'tempel-complete
+                     #'cape-dabbrev
+                     #'cape-keyword
+                     #'cape-file)
+                    :sort t
+                    :exclusive 'no))))
+                cape-dabbrev-check-other-buffers nil))
+  (:with-hook prog-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook text-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook conf-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook org-mode-hook
+    (:hook tempel-setup-capf)))
+
+(setup tempel-collection
+  (:elpaca tempel-collection :host github :repo "Crandel/tempel-collection"))
+
+(setup eglot-tempel
+  (:elpaca eglot-tempel :host github :repo "fejfighter/eglot-tempel")
+  (:load-after tempel eglot)
+  (eglot-tempel-mode t))
 
 (setup flycheck
   (:elpaca flycheck :host github :repo "flycheck/flycheck")
@@ -487,8 +631,7 @@ point reaches the beginning or end of the buffer, stop there."
 ;; https://qiita.com/akirak/items/11dafdf89e32d34f3fc9
 
 (setup eglot
-  (:with-mode (python-mode
-               html-mode)
+  (:with-mode html-mode
     (:hook eglot-ensure))
   (:opt eglot-sync-connect 3
         eglot-connect-timeout 30
@@ -512,7 +655,17 @@ point reaches the beginning or end of the buffer, stop there."
 
 (setup eglot-booster
   (:elpaca eglot-booster :host github :repo "jdtsmith/eglot-booster")
-  (eglot-booster-mode))
+  (:with-hook eglot-managed-mode-hook
+    (:hook labmda ()
+           (eglot-booster-mode t))))
+
+(setup eglot-x
+  (:elpaca eglot-x :host github :repo "nemethf/eglot-x")
+  (:with-map eglot-mode-map
+    (:bind
+     "s-." eglot-x-find-refs))
+  (:when-loaded
+    (eglot-x-setup)))
 
 (setup flycheck-eglot
   (:elpaca flycheck-eglot :host github :repo "flycheck/flycheck-eglot")
@@ -573,6 +726,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 (setup go-ts-mode
   (:file-match "\\.go\\'")
+  (:option go-ts-mode-indent-offset 4)
   (:hook eglot-ensure))
 
 (setup go-mod-ts-mode
@@ -614,6 +768,10 @@ point reaches the beginning or end of the buffer, stop there."
  (:option sh-basic-offset 2)
  (:hook shfmt-on-save-mode
         eglot-ensure))
+
+(setup python-ts-mode
+  (:mode-remap python-mode)
+  (:hook eglot-ensure))
 
 ;; (setup dockerfile-mode
 ;;   (:elpaca t)
@@ -678,21 +836,85 @@ point reaches the beginning or end of the buffer, stop there."
          visual-fill-column-mode
          adaptive-wrap-prefix-mode))
 
+(setup indent-bars
+  (:elpaca indent-bars :host github :repo "jdtsmith/indent-bars")
+  (:opt indent-bars-no-descend-lists t
+        indent-bars-treesit-support t
+        indent-bars-treesit-ignore-blank-lines-types '("module")
+        indent-bars-treesit-scope '((python function_definition class_definition for_statement if_statement with_statement while_statement)))
+  (:with-mode (python-ts-mode
+               yaml-ts-mode)
+    (:hook indent-bars-mode)))
+
+(setup eww
+  ;; (:option eww-search-prefix "https://www.google.co.jp/search?q="
+  ;;          shr-use-fonts nil)
+  (:option eww-search-prefix "https://www.google.co.jp/search?&gws_rd=cr&complete=0&pws=0&tbs=li:1&q="
+           shr-use-fonts nil)
+  (defun eww-mode-hook--rename-buffer ()
+    "Rename eww browser's buffer so sites open in new page."
+    (rename-buffer "eww" t))
+  (defun eww-mode-hook--disable-image ()
+    (setq-local shr-put-image-function 'shr-put-image-alt))
+  (:hook eww-mode-hook--rename-buffer
+         eww-mode-hook--disable-image
+         (lambda ()
+           (defun eww-disable-images ()
+             "don't display image on eww"
+             (interactive)
+             (setq-local shr-put-image-function 'shr-put-image-alt)
+             (eww-reload))
+           (defun eww-enable-images ()
+             "display image on eww"
+             (interactive)
+             (setq-local shr-put-image-function 'shr-put-image)
+             (eww-reload))
+           (defun shr-put-image-alt (spec alt &optional flags)
+             (insert alt))
+           (display-line-numbers-mode -1)))
+  (:with-map eww-mode-map
+    (:bind
+     "f" ace-link-eww
+     "r" eww-reload
+     "o" eww
+     "&" eww-browse-with-external-browser
+     "b" eww-back-url
+     "]" eww-next-url
+     "[" eww-previous-url
+     "g" eww-top-url
+     "h" backward-char
+     "j" next-line
+     "k" previous-line
+     "l" forward-char
+     "/" isearch-forward
+     "?" isearch-backward
+     "c 0" eww-copy-page-url
+     "p" scroll-down
+     "n" isearch-next))
+  (ace-link-setup-default))
+
 (which-key-mode 1)
 
 ;; https://a.conao3.com/blog/2024/7c7c265/
 ;; https://apribase.net/2024/07/27/modern-emacs-2024/
+;; https://apribase.net/2024/05/29/emacs-elpaca-setup-el/
 ;; https://qiita.com/nobuyuki86/items/122e85b470b361ded0b4
+;; https://uwabami.github.io/cc-env/Emacs.html
 ;; https://emacs.takeokunn.org/
-
-(cd "~/")
-
-;; https://qiita.com/nobuyuki86/items/122e85b470b361ded0b4
+;; https://mako-note.com/ja/python-emacs-eglot/
+;; https://www.yargry.com/notebook/emacs_imenu_list.html
+;; https://github.com/iocanel/emacs.d?tab=readme-ov-file
 ;; https://zenn.dev/takeokunn/articles/56010618502ccc
 ;; https://gitlab.com/jdm204/dotfiles/-/blob/master/config.org
 ;; https://www.patrickdelliott.com/emacs.d/
-;; https://apribase.net/2024/05/29/emacs-elpaca-setup-el/
 ;; https://www.grugrut.net/posts/my-emacs-init-el/
+
+;; python 関係は設定していない
+;; https://tam5917.hatenablog.com/entry/2024/07/01/150557
+;; https://tam5917.hatenablog.com/entry/2024/01/01/102643
+
+(cd "~/")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

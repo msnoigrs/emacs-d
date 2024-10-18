@@ -30,3 +30,5 @@
 ;; suspend-frame を無効にする
 (global-unset-key (kbd "C-x C-z"))
 (global-unset-key (kbd "C-z"))
+
+(set-default-coding-systems 'utf-8)
