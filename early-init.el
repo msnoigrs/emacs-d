@@ -23,7 +23,7 @@
 (setq default-directory "~/")
 (setq command-line-default-directory "~/")
 
-(setq history-delete-duplicates t)
+(setq confirm-kill-emacs 'y-or-n-p)
 
 ;; Ctrl-h でカーソル前の文字を消す
 (define-key key-translation-map (kbd "C-h") (kbd "<DEL>"))

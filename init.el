@@ -102,7 +102,7 @@
 
 (setq native-comp-async-report-warnings-errors 'silent)
 
-(defvar elpaca-installer-version 0.7)
+(defvar elpaca-installer-version 0.8)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -379,7 +379,12 @@ The ORDER can be used to deduce the feature context."
 ;; (setopt editorconfig-exec-path "c:/msys64/usr/local/bin/editorconfig.exe")
 ;; (editorconfig-mode 1)
 
-(savehist-mode 1)
+(setup savehist
+  (:option savehist-file (locate-user-emacs-file "savehist")
+           history-length 500
+           history-delete-duplicates t
+           savehist-save-minibuffer-history t)
+  (savehist-mode 1))
 
 ;; (use-package f :demand t)
 (setup f
@@ -485,7 +490,11 @@ The ORDER can be used to deduce the feature context."
      "<tab>" corfu-insert
      "RET" nil
      "<return>" nil))
-  (global-corfu-mode)
+  (global-corfu-mode))
+
+(setup corfu-popupinfo
+  (:elpaca corfu-popupinfo :host github :repo "minad/corfu")
+  (:load-after corfu)
   (corfu-popupinfo-mode +1))
 
 (setup cape
@@ -496,7 +505,8 @@ The ORDER can be used to deduce the feature context."
   (:elpaca orderless :host github :repo "oantolin/orderless")
   (:option completion-style '(orderless basic)
            completion-category-defaults nil
-           completion-category-overrides nil)
+           completion-category-overrides '((file (styles partial-completion))))
+           ;; completion-category-overrides nil)
   (:with-hook corfu-mode-hook
     (:hook (lambda ()
              (setq-local orderless-matching-styles '(orderless-flex)))))
@@ -521,9 +531,9 @@ The ORDER can be used to deduce the feature context."
 
 (setup kind-icon
   (:elpaca kind-icon :host github :repo "jdtsmith/kind-icon")
-  (:load-after corfu)
   (:opt kind-icon-default-face 'corfu-default)
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+  (with-eval-after-load 'corfu
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
 
 (setup corfu-terminal
   (:elpaca corfu-terminal :host "codeberg.org" :repo "https://codeberg.org/akib/emacs-corfu-terminal.git")
@@ -574,6 +584,12 @@ The ORDER can be used to deduce the feature context."
 (setup flycheck
   (:elpaca flycheck :host github :repo "flycheck/flycheck")
   (global-flycheck-mode))
+
+;; choco 管理者で volta入れる
+;; volta で node入れる
+;; PATH
+;; /ucrt64/bin:/usr/local/bin:/usr/bin:/bin:/c/Windows/System32:/c/Windows:/c/Windows/System32/Wbem:/c/Windows/System32/WindowsPowerShell/v1.0/:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/c/emacs/bin:/c/users/xx/go/bin:/c/users/xx/.cargo/bin:/C/Users/xx/AppData/Local/Volta/bin:/c/msys64/home/xx/eask-cli/bin:/c/program files/go/bin:/c/texlive/2024/bin/windows:/c/program files/inkscape/bin:/c/program files/volta
+;; chocolatey
 
 ;; dprint
 ;; npm install -g dprint
@@ -846,9 +862,14 @@ The ORDER can be used to deduce the feature context."
                yaml-ts-mode)
     (:hook indent-bars-mode)))
 
+(setup ace-link
+  (:elpaca ace-link :host github :repo "abo-abo/ace-link")
+  (ace-link-setup-default))
+
 (setup eww
   ;; (:option eww-search-prefix "https://www.google.co.jp/search?q="
   ;;          shr-use-fonts nil)
+  (:load-after ace-link)
   (:option eww-search-prefix "https://www.google.co.jp/search?&gws_rd=cr&complete=0&pws=0&tbs=li:1&q="
            shr-use-fonts nil)
   (defun eww-mode-hook--rename-buffer ()
@@ -891,7 +912,417 @@ The ORDER can be used to deduce the feature context."
      "c 0" eww-copy-page-url
      "p" scroll-down
      "n" isearch-next))
-  (ace-link-setup-default))
+  (defvar eww-home-page "https://duckduckgo.com")
+
+  (defun browse-url-with-eww ()
+    (interactive)
+    (let ((url-region (bounds-of-thing-at-point 'url)))
+      ;; url
+      (if url-region
+          (eww-browse-url (buffer-substring-no-properties (car url-region)
+						                                  (cdr url-region))))
+      ;; org-link
+      (setq browse-url-browser-function 'eww-browse-url)
+      (org-open-at-point)))
+
+  (defun eww-gohome ()
+    "Go to to the homepage specified by `eww-home-page'."
+    (interactive)
+    (unless eww-home-page
+      (user-error "No `eww-home-page` is found."))
+    (eww-browse-url eww-home-page)))
+
+;; https://blog.tomoya.dev/posts/a-new-wave-has-arrived-at-emacs/
+
+(setup vertico
+  (:elpaca vertico :host github :repo "minad/vertico")
+  (:option vertico-scroll-margin 0
+           vertico-count 40
+           ;; vertico-resize t
+           vertico-cycle t
+           enable-recursive-minibuffers t
+           read-extended-command-predicate #'command-completion-default-include-p)
+  (:with-map vertico-map
+    (:bind
+     "?" minibuffer-completion-help
+     "M-RET" minibuffer-force-complete-and-exit
+     "M-TAB" minibuffer-complete
+     "DEL" vertico-directory-delete-char
+     "C-l" vertico-directory-up
+     "M-q" vertico-quick-insert
+     "C-q" vertico-quick-exit))
+  (vertico-mode)
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (:with-hook minibuffer-setup-hook
+    (:hook cursor-intangible-mode)))
+
+;; (setup vertico-posframe
+;;   (:elpaca vertico-posframe :host github :repo "tumashu/vertico-posframe")
+;;   (:load-after vertico posframe)
+;;   (vertico-posframe-mode 1))
+
+(setup vertico-repeat
+  (:elpaca vertico-repeat :host github :repo "minad/vertico")
+  (:load-after vertico)
+  (:with-hook minibuffer-setup-hook
+    (:hook vertico-repeat-save)))
+
+(setup vertico-directory
+  (:elpaca vertico-directory :host github :repo "minad/vertico")
+  (:load-after vertico)
+  (:with-map vertico-map
+    (:bind
+     "<backspace>" vertico-directory-delete-char)))
+
+;; (setup vertico-buffer
+;;   (:elpaca vertico-buffer :host github :repo "minad/vertico")
+;;   (:load-after vertico)
+;;   (:option vertico-buffer-display-action '(display-buffer-at-bottom))
+;;   (vertico-buffer-mode +1))
+
+(setup embark
+  (:elpaca t)
+  (:option prefix-help-command #'embark-prefix-help-command)
+  (:global
+   "C-." embark-act
+   "C-;" embark-dwim
+   "<f1> B" embark-bindings)
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+
+(setup resentf
+  (recentf-mode 1))
+
+(setup switch-buffer-functions
+  (:elpaca t)
+  (:load-after resentf)
+  ;; https://tsuu32.hatenablog.com/entry/2019/12/16/124052
+  (defun my-recentf-track-visited-file (_prev _curr)
+    (and buffer-file-name
+         (recentf-add-file buffer-file-name)))
+  (:with-hook switch-buffer-functions
+    (:hook my-recentf-track-visited-file)))
+
+;; https://zenn.dev/ykrods/articles/7f2116495de1e0
+
+;; https://joppot.info/posts/2d8a8c1d-6d7f-4cf8-a51a-0f7e5c7e3c80
+(setup consult
+  (:elpaca t)
+  (:global
+   "C-c M-x" consult-mode-command
+   "C-c h" consult-history
+   "C-c k" consult-kmacro
+   "C-c m" consult-man
+   "C-c i" consult-info
+   [remap Info-search] consult-info
+   "C-x M-:" consult-complex-command
+   "C-x b" consult-buffer
+   "C-x 4 b" consult-buffer-other-window
+   "C-x 5 b" consult-buffer-other-frame
+   "C-x t b" consult-buffer-other-tab
+   "C-x r b" consult-bookmark
+   "C-x p b" consult-project-buffer
+   "M-#" consult-register-load
+   "M-'" consult-register-store
+   "C-M-#" consult-register
+   "M-y" consult-yank-pop
+   "M-g e" consult-compiler-error
+   "M-g f" consult-flycheck
+   "M-g g" consult-goto-line
+   "M-g M-g" consult-goto-line
+   "M-g o" consult-outline
+   "M-g m" consult-mark
+   "M-g k" consult-global-mark
+   "M-g i" consult-imenu
+   "M-g I" consult-imenu-multi
+   "M-s d" consult-find
+   "M-s c" consult-locate
+   "M-s g" consult-grep
+   "M-s G" consult-git-grep
+   "M-s r" consult-ripgrep
+   "M-s l" consult-line
+   "M-s L" consult-line-multi
+   "M-s k" consult-keep-lines
+   "M-s u" consult-focus-lines
+   "M-s e" consult-isearch-history)
+  (:with-map isearch-mode-map
+    (:bind
+     "M-e" consult-isearch-history
+     "M-s e" consult-isearch-history
+     "M-s l" consult-line
+     "M-s L" consult-line-multi))
+  (:with-map minibuffer-local-map
+    (:bind
+     "M-s" consult-history
+     "M-r" consult-history))
+  (:with-hook completion-list-mode-hook
+    (:hook consult-preview-at-point-mode))
+  (:option register-preview-delay 0.5
+           register-preview-function #'consult-register-format
+           xref-show-xrefs-function #'consult-xref
+           xref-show-definitions-function #'consult-xref
+           consult-narrow-key "<"
+           consult-project-function #'consult--default-project-function)
+  (advice-add #'register-preview :override #'consult-register-window)
+  (:when-loaded
+    ;; https://tam5917.hatenablog.com/entry/2022/02/05/202816
+    ;; カーソル下のシンボルを拾ってconsult-line発動
+    ;; (defun consult-line-symbol-at-point (&optional at-point)
+    ;;   (interactive "P")
+    ;;   (if at-point
+    ;;       (consult-line (thing-at-point 'symbol))
+    ;;     (consult-line)))
+
+    ;; consult--source-fileの公式実装では「現在バッファとして保持しているファイル」が
+    ;; ファイル(recentf)の検索対象から除外されるので、
+    ;; それをやめるため単純にitemsにrecentf-listだけを持ってくる。
+    ;; この設定の影響範囲はconsult-bufferのみ。consult-recent-fileは影響を受けない
+    (setq consult--source-recent-file
+          `(:name     "File"
+                      :narrow   ?f
+                      :category file
+                      :face     consult-file
+                      :history  file-name-history
+                      :action   ,#'consult--file-action
+                      :enabled   ,(lambda () recentf-mode)
+                      :items ,recentf-list))
+    (consult-customize
+     consult-theme
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     :preview-key '(:debounce 0.2 any))))
+
+(setup consult-eglot
+  (:elpaca t)
+  (:load-after consult eglot))
+
+(setup consult-eglot-embark
+  (:elpaca t)
+  (:load-after consult eglot embark)
+  (consult-eglot-embark-mode))
+
+(setup consult-dir
+  (:elpaca t)
+  (:load-after consult)
+  (:global
+   "C-x C-d" consult-dir)
+  (:with-map minibuffer-local-completion-map
+    (:bind
+     "C-x C-d" consult-dir
+     "C-x C-j" consult-dir-jump-file)))
+
+(setup embark-consult
+  (:elpaca t)
+  (:load-after embark consult)
+  (:with-mode embark-collect-mode
+    (:hook consult-preview-at-point-mode)))
+
+;; (setup projectile
+;;   (:elpaca t)
+;;   (:load-after consult)
+;;   (:option consult-project-function (lambda (_) (projectile-project-root)))
+;;   (:with-map projectile-mode-map
+;;     (:bind
+;;      "s-p" projectile-command-map
+;;      "C-c p" projectile-command-map))
+;;   (projectile-mode +1))
+
+(setup marginalia
+  (:elpaca t)
+  (:with-map minibuffer-local-map
+    (:bind
+     "M-A" marginalia-cycle))
+  (marginalia-mode))
+
+(setup nerd-icons
+  (:elpaca t)
+  (:option nerd-icons-font-family "Symbols Nerd Font Mono"))
+
+(setup nerd-icons-completion
+  (:elpaca t)
+  (:load-after nerd-icons vertico marginalia)
+  (defvar +vertico-current-arrow t)
+  (cl-defmethod vertico--format-candidate :around
+    (cand prefix suffix index start &context
+          ((and +vertico-current-arrow
+                (not (bound-and-true-p vertico-flat-mode)))
+           (eql t)))
+    (setq cand (cl-call-next-method cand prefix suffix index start))
+    (if (bound-and-true-p vertico-grid-mode)
+        (if (= vertico--index index)
+            (concat (nerd-icons-faicon "nf-fa-hand_o_right" :face 'nerd-icons-blue)
+                    "\t" cand)
+          (concat #("_" 0 1 (display " ")) cand))
+      (if (= vertico--index index)
+          (concat " " (nerd-icons-faicon "nf-fa-hand_o_right" :face 'nerd-icons-blue)
+                  "\t" cand)
+        (concat "\t" cand))))
+  (nerd-icons-completion-mode))
+
+(setup nerd-icons-dired
+  (:elpaca t)
+  (:load-after nerd-icons)
+  (:with-hook dired-mode-hook
+    (:hook nerd-icons-dired-mode)))
+
+(setup nerd-icons-corfu
+  (:elpaca t)
+  (:load-after nerd-icons)
+  (with-eval-after-load 'corfu
+    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)))
+
+;; (setup dirvish
+;;   (:elpaca dirvish :host github :repo "alexluigit/dirvish")
+;;   (dirvish-override-dired-mode))
+
+
+(setup kanji-mode
+  (:elpaca t)
+  (:opt *km:kakasi-executable* (locate-file "kakasi.exe" exec-path)))
+
+;; Org-Mode
+
+(setup org
+  (:global
+   "C-c l" org-store-link
+   "C-c c" org-capture
+   "C-c a" org-agenda)
+  (:option org-directory "~/.emacs.d/orgdocs"
+           orgx1-default-notes-file (concat org-directory "/notes.org")
+           org-agenda-files '("~/.emacs.d/orgdocs")
+           org-refile-targets '((org-agenda-files :maxlevel . 3))
+           org-return-follows-link t
+           org-mouse-1-follows-link t)
+  (:hook turn-off-auto-fill
+         turn-on-visual-line-mode
+         visual-fill-column-mode
+         adaptive-wrap-prefix-mode))
+
+;; https://ueeda.sakura.ne.jp/misc/cheat_sheet_for_org-journal.html
+;; https://ueeda.sakura.ne.jp/misc/ways_for_howm_to_survive.html
+
+(setup org-roam
+  (:elpaca org-roam :host github :repo "org-roam/org-roam")
+  (:load-after org-journal)
+  (:option
+   org-roam-db-location (file-truename "~/.emacs.d/org-roam.db")
+   org-roam-directory (file-truename "~/.emacs.d/org-roam")
+   org-roam-completion-everywhere t
+   org-roam-capture-templates '(("d" "default" plain "%?"
+                                 :target (file+head "%<%Y%m%d%H%M%S>-${customslug}.org"
+                                                    "#+title: ${title}\n")
+                                 :unnarrowed t))
+   org-roam-capture-ref-templates '(("r" "ref" plain "%U\n${ref}\n%?"
+                                     :target (file+head+olp "ref/%<%Y%m%H%M%S>-ref.org"
+                                                            ":PROPERTIES:\n:CATEGORY: ref\n:END:\n#+title: ${title}\n"
+                                                            ("${title}"))
+                                     :unnarrowed t
+                                     :empty-lines-before 1)))
+  (:global
+   "C-c n f" org-roam-node-find
+   "C-c n r" org-roam-node-random)
+  (:with-map org-mode-map
+    (:bind
+     "C-c n i" org-roam-node-insert
+     "C-c n l" org-roam-buffer-toggle
+     "C-c n o" org-id-get-create
+     "C-c n t" org-roam-tag-add
+     "C-c n a" org-roam-alias-add))
+  (with-eval-after-load 'org-roam
+    (require 'kanji-mode)
+    (require 'cl-lib)
+    (cl-defmethod org-roam-node-customslug ((node org-roam-node))
+      "Return the slug of NODE."
+      (let ((title (org-roam-node-title node))
+            (slug-trim-chars '(;; Combining Diacritical Marks https://www.unicode.org/charts/PDF/U0300.pdf
+                               768 ; U+0300 COMBINING GRAVE ACCENT
+                               769 ; U+0301 COMBINING ACUTE ACCENT
+                               770 ; U+0302 COMBINING CIRCUMFLEX ACCENT
+                               771 ; U+0303 COMBINING TILDE
+                               772 ; U+0304 COMBINING MACRON
+                               774 ; U+0306 COMBINING BREVE
+                               775 ; U+0307 COMBINING DOT ABOVE
+                               776 ; U+0308 COMBINING DIAERESIS
+                               777 ; U+0309 COMBINING HOOK ABOVE
+                               778 ; U+030A COMBINING RING ABOVE
+                               779 ; U+030B COMBINING DOUBLE ACUTE ACCENT
+                               780 ; U+030C COMBINING CARON
+                               795 ; U+031B COMBINING HORN
+                               803 ; U+0323 COMBINING DOT BELOW
+                               804 ; U+0324 COMBINING DIAERESIS BELOW
+                               805 ; U+0325 COMBINING RING BELOW
+                               807 ; U+0327 COMBINING CEDILLA
+                               813 ; U+032D COMBINING CIRCUMFLEX ACCENT BELOW
+                               814 ; U+032E COMBINING BREVE BELOW
+                               816 ; U+0330 COMBINING TILDE BELOW
+                               817 ; U+0331 COMBINING MACRON BELOW
+                               )))
+        (cl-flet* ((nonspacing-mark-p (char) (memq char slug-trim-chars))
+                   (strip-nonspacing-marks (s) (string-glyph-compose
+                                                (apply #'string
+                                                       (seq-remove #'nonspacing-mark-p
+                                                                   (string-glyph-decompose s)))))
+                   (cl-replace (title pair) (replace-regexp-in-string (car pair) (cdr pair) title)))
+          (let* ((pairs `(("[^[:alnum:][:digit:]]" . "_") ;; convert anything not alphanumeric
+                          ("__*" . "-")                   ;; remove sequential underscores
+                          ("^_" . "")                     ;; remove starting underscore
+                          ("_$" . "")))                   ;; remove ending underscore
+                 (slug (-reduce-from #'cl-replace (km:all->romaji (strip-nonspacing-marks title)) pairs)))
+            (downcase slug))))))
+  (org-roam-db-autosync-mode)
+  (require 'org-roam-protocol))
+
+;; javascript:location.href =
+;;     'org-protocol://roam-ref?template=r&ref='
+;;     + encodeURIComponent(location.href)
+;;     + '&title='
+;;     + encodeURIComponent(document.title)
+;;     + '&body='
+;;     + encodeURIComponent(window.getSelection())
+
+(setup org-roam-timestamps
+  (:elpaca org-roam-timestamps :host github :repo "tefkah/org-roam-timestamps")
+  (:option org-roam-timestamps-parent-file t)
+  (with-eval-after-load 'org-roam
+    (org-roam-timestamps-mode)))
+
+(setup org-journal
+  (:elpaca t)
+  (:option org-journal-dir (file-truename "~/.emacs.d/org-roam/journal")
+           org-journal-find-file 'find-file
+           org-journal-file-type 'daily
+           org-journal-file-format "%Y%m%d-journal.org"
+           org-journal-file-header "#+title: %Y%m%d Journal\n\n"
+           org-journal-date-format "%Y-%m-%d"
+           org-journal-date-prefix "* "
+           org-journal-time-format "%R\n\n"
+           org-journal-time-prefix "** ")
+  (:global
+   "C-cj" org-journal-new-entry))
+
+(setup org-download
+  (:elpaca t)
+  (:option org-download-image-dir "~/.emacs.d/pictures")
+  (:with-map org-mode-map
+    (:bind
+     "s-Y" org-download-screenshot
+     "s-y" org-download-yank))
+  (:with-hook dired-mode-hook
+    (:hook org-download-enable)))
 
 (which-key-mode 1)
 
@@ -912,6 +1343,11 @@ The ORDER can be used to deduce the feature context."
 ;; python 関係は設定していない
 ;; https://tam5917.hatenablog.com/entry/2024/07/01/150557
 ;; https://tam5917.hatenablog.com/entry/2024/01/01/102643
+
+(when window-system
+  (require 'server)
+  (unless (eq (server-running-p) 't)
+    (server-start)))
 
 (cd "~/")
 
