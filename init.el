@@ -1,5 +1,5 @@
 ;;; init.el -*- lexical-bindings:t; no-byte-compile:t -*-
-
+ 
 (when window-system
   (setq modus-themes-bold-constructs t)
   (load-theme 'modus-operandi-tinted)
@@ -218,13 +218,14 @@ The ORDER can be used to deduce the feature context."
 
 (setup migemo
   (:elpaca migemo :host github :repo "emacs-jp/migemo")
-  (:opt migemo-dictionary "c:/msys64/usr/local/share/migemo/utf-8/migemo-dict"
-        migemo-user-dictionary nil
-        migemo-regex-dictionary nil
-        migemo-coding-system 'utf-8-unix)
+  (:option migemo-dictionary "c:/msys64/usr/local/share/migemo/utf-8/migemo-dict"
+           migemo-options '("-q" "-n" "-e")
+           migemo-user-dictionary nil
+           migemo-regex-dictionary nil
+           migemo-coding-system 'utf-8-unix)
   (require 'cmigemo)
   ;;(require 'migemo-isearch-auto-enable)
-  (cmigemo-init))
+  (migemo-init))
 
 (setup posframe
   (:elpaca t))
@@ -469,65 +470,115 @@ The ORDER can be used to deduce the feature context."
         corfu-quit-at-boundary 'separator
         corfu-quit-no-match t
         corfu-preselect 'valid
-        corfu-on-exact-match nil)
+        corfu-on-exact-match nil
+        corfu-min-width 25
+        corfu-max-width corfu-min-width
+        corfu-count 14
+        corfu-popupinfo-delay '(0.5 . 0.5))
   (:option text-mode-ispell-word-completion nil
            tab-always-indent 'complete)
-  (defun corfu-beginning-of-prompt()
-    "Move to beginning of completion input."
-    (interactive)
-    (corfu--goto -1)
-    (goto-char (car completion-in-region--data)))
-  (defun corfu-end-of-prompt()
-    "Move to end of completion input."
-    (interactive)
-    (corfu--goto -1)
-    (goto-char (cadr completion-in-region--data)))
+  ;; (defun corfu-beginning-of-prompt()
+  ;;   "Move to beginning of completion input."
+  ;;   (interactive)
+  ;;   (corfu--goto -1)
+  ;;   (goto-char (car completion-in-region--data)))
+  ;; (defun corfu-end-of-prompt()
+  ;;   "Move to end of completion input."
+  ;;   (interactive)
+  ;;   (corfu--goto -1)
+  ;;   (goto-char (cadr completion-in-region--data)))
   (:with-map corfu-map
     (:bind
      ;; "<remap> <move-beginning-of-line>" corfu-beginning-of-prompt
      ;; "<remap> <move-end-of-line" corfu-end-of-prompt
+     "SPC" corfu-insert-separator
      "TAB" corfu-insert
-     "<tab>" corfu-insert
+     "<tab>" corfu-insert)
      "RET" nil
-     "<return>" nil))
-  (global-corfu-mode))
-
-(setup corfu-popupinfo
-  (:elpaca corfu-popupinfo :host github :repo "minad/corfu")
-  (:load-after corfu)
+     "<return>" nil)
+  (global-corfu-mode)
+  ;; (corfu-history-mode +1)
   (corfu-popupinfo-mode +1))
+  ;; 補完候補未選択時にRETを押下すると改行が挿入され、補完候補選択時にRETを押下すると補完候補を選択する。
+  ;; (defvar corfu--index)
+  ;; (defvar corfu-magic-insert-or-next-line
+  ;;   `(menu-item "" nil :filter ,(lambda (&optional _)
+  ;;                                 (when (>= corfu--index 0)
+  ;;                                   'corfu-insert)))
+  ;;   "If we made a selection during `corfu' completion, select it.")
+  ;; (defvar corfu-magic-cancel-or-backspace
+  ;;   `(menu-item "" nil :filter ,(lambda (&optional _)
+  ;;                                 (when (>= corfu--index 0)
+  ;;                                   'corfu-reset)))
+  ;;   "If we made a selection during `corfu' completion, cancel it.")
+  ;; (define-key corfu-map [return] corfu-magic-insert-or-next-line)
+  ;; (define-key corfu-map [delete] corfu-magic-cancel-or-backspace)
+  ;; (define-key corfu-map [backspace] corfu-magic-cancel-or-backspace))
 
 (setup cape
   (:elpaca cape :host github :repo "minad/cape")
-  (:opt cape-dabbrev-min-length 2))
+  (:option cape-dabbrev-min-length 2)
+  (setq-default completion-at-point-functions
+                (append (default-value 'completion-at-point-functions)
+                        (list #'cape-dabbrev #'cape-file #'cape-abbrev))))
 
 (setup orderless
   (:elpaca orderless :host github :repo "oantolin/orderless")
-  (:option completion-style '(orderless basic)
-           completion-category-defaults nil
-           completion-category-overrides '((file (styles partial-completion))))
-           ;; completion-category-overrides nil)
-  (:with-hook corfu-mode-hook
-    (:hook (lambda ()
-             (setq-local orderless-matching-styles '(orderless-flex)))))
-  (defun orderless-migemo (component)
-    (let ((pattern (downcase (migemo-get-pattern component))))
-      (condition-case nil
-          (progn (string-match-p pattern "") pattern)
-        (invalid-regexp nil))))
+  (:option completion-styles '(orderless basic)
+           completion-category-defaults nil)
+
+  ;; (:with-hook corfu-mode-hook
+  ;;   (:hook (lambda ()
+  ;;            (setq-local orderless-matching-styles '(orderless-flex)))))
+
   (:when-loaded
-    (add-to-list 'orderless-matching-styles 'orderless-migemo)))
+    (defun orderless-migemo (component)
+      (let ((pattern (downcase (migemo-get-pattern component))))
+        (condition-case nil
+            (progn (string-match-p pattern "") pattern)
+          (invalid-regexp nil))))
 
-(setup prescient
-  (:elpaca prescient :host github :repo "radian-software/prescient.el")
-  (:opt prescient-aggressive-file-save t
-        prescient-persist-mode t))
+    (add-to-list 'orderless-matching-styles 'orderless-migemo)
 
-(setup corfu-prescient
-  (:elpaca corfu-prescient :host github :repo "radian-software/prescient.el")
-  (:load-after corfu orderless)
-  (:option corfu-prescient-enable-filterring nil)
-  (:opt corfu-prescient-mode t))
+    ;; https://nyoho.jp/diary/?date=20210615
+
+    (orderless-define-completion-style orderless-default-style
+      (orderless-matching-styles '(orderless-literal
+                                   orderless-regexp)))
+    (orderless-define-completion-style orderless-migemo-style
+      (orderless-matching-styles '(orderless-literal
+                                   orderless-regexp
+                                   orderless-migemo)))
+    (setq completion-category-overrides
+          '((command (styles orderless-default-style))
+            (file (styles orderless-migemo-style))
+            (buffer (styles orderless-migemo-style))
+            (symbol (styles orderless-default-style))
+            (consult-location (styles orderless-migemo-style)) ; category `consult-location' は `consult-line' などに使われる
+            (consult-multi (styles orderless-migemo-style)) ; category `consult-multi' は `consult-buffer' などに使われる
+            (org-roam-node (styles orderless-migemo-style)) ; category `org-roam-node' は `org-roam-node-find' で使われる
+            (eglot (styles orderless-migemo-style))
+            (unicode-name (styles orderless-migemo-style))
+            (variable (styles orderless-default-style))))))
+
+;; (eglot-capf (styles eglot--dumb-flex))
+
+;; (setup prescient
+;;   (:elpaca prescient :host github :repo "radian-software/prescient.el")
+;;   (:option prescient-aggressive-file-save t
+;;            prescient-persist-mode t))
+
+;; (setup corfu-prescient
+;;   (:elpaca corfu-prescient :host github :repo "radian-software/prescient.el")
+;;   (:load-after prescient corfu orderless)
+;;   (:option corfu-prescient-enable-filterring nil
+;;            corfu-prescient-completion-styles '(prescient basic)
+;;            corfu-prescient-completion-category-overrides
+;;            '((eglot (styles prescient basic))
+;;              (file (styles basic partial-completion))))
+;;   ;; (with-eval-after-load 'orderless
+;;   ;;   (setq corfu-prescient-enable-filterring nil))
+;;   (corfu-prescient-mode +1))
 
 (setup kind-icon
   (:elpaca kind-icon :host github :repo "jdtsmith/kind-icon")
@@ -605,6 +656,8 @@ The ORDER can be used to deduce the feature context."
 
 (setup reformatter
   (:elpaca t)
+  (:with-hook python-ts-mode-hook
+    (:hook ruff-on-save-mode))
   (reformatter-define cljstyle
     :program "cljstyle" :args '("pipe"))
   (reformatter-define dprint
@@ -941,7 +994,7 @@ The ORDER can be used to deduce the feature context."
            ;; vertico-resize t
            vertico-cycle t
            enable-recursive-minibuffers t
-           read-extended-command-predicate #'command-completion-default-include-p)
+           read-extended-command-predicate #'command-completion-default-include-p) ; corfu
   (:with-map vertico-map
     (:bind
      "?" minibuffer-completion-help
@@ -1015,11 +1068,18 @@ The ORDER can be used to deduce the feature context."
   (:with-hook switch-buffer-functions
     (:hook my-recentf-track-visited-file)))
 
+;; (setup pcre2el
+;;   (:elpaca pcre2el :host github :repo "joddie/pcre2el"))
+;; (setup counsel
+;;   (:elpaca t))
+
 ;; https://zenn.dev/ykrods/articles/7f2116495de1e0
 
 ;; https://joppot.info/posts/2d8a8c1d-6d7f-4cf8-a51a-0f7e5c7e3c80
 (setup consult
   (:elpaca t)
+  ;; (:load-after pcre2el)
+  ;; (:load-after counsel)
   (:global
    "C-c M-x" consult-mode-command
    "C-c h" consult-history
@@ -1104,7 +1164,27 @@ The ORDER can be used to deduce the feature context."
      consult-bookmark consult-recent-file consult-xref
      consult--source-bookmark consult--source-file-register
      consult--source-recent-file consult--source-project-recent-file
-     :preview-key '(:debounce 0.2 any))))
+     :preview-key '(:debounce 0.2 any))
+    ;; https://www.yewton.net/2022/02/07/consult-ripgrep-migemo/
+    (defun consult--migemo-regexp-compiler (input type ignore-case)
+      (setq input (mapcar #'migemo-get-pattern (consult--split-escaped input)))
+      (cons (mapcar (lambda (x) (consult--convert-regexp x type)) input)
+            (when-let (regexps (seq-filter #'consult--valid-regexp-p input))
+              (apply-partially #'consult--highlight-regexps regexps ignore-case))))
+    (setq consult--regexp-compiler #'consult--migemo-regexp-compiler)
+
+    ;; https://emacs.dyerdwelling.family/emacs/20230225134207-emacs--trying-out-consult-ripgrep-to-replace-deadgrep/
+    (defun my/grep (arg)
+      (interactive "p")
+      (if (equal major-mode 'dired-mode)
+          (setq search-term
+                (read-from-minibuffer "Search : "))
+        (setq search-term
+              (read-from-minibuffer "Search : " (thing-at-point 'symbol))))
+      (if (> arg 1) ;; C-u
+          (consult-ripgrep default-directory search-term)
+        (consult-ripgrep (my/project-root) search-term)))))
+    
 
 (setup consult-eglot
   (:elpaca t)
@@ -1141,12 +1221,23 @@ The ORDER can be used to deduce the feature context."
 ;;      "C-c p" projectile-command-map))
 ;;   (projectile-mode +1))
 
+(setup project
+  (:option project-vc-merge-submodules nil)
+  (defun my/project-root ()
+    (interactive)
+    "Guess the project root of the given FILE-PATH."
+    (if-let (proj (project-current))
+        (project-root proj)
+      (symbol-value 'default-directory))))
+
 (setup marginalia
   (:elpaca t)
   (:with-map minibuffer-local-map
     (:bind
      "M-A" marginalia-cycle))
-  (marginalia-mode))
+  (marginalia-mode)
+  (add-to-list 'marginalia-prompt-categories
+               '("\\<File\\>" . file)))
 
 (setup nerd-icons
   (:elpaca t)
@@ -1189,7 +1280,6 @@ The ORDER can be used to deduce the feature context."
 ;;   (:elpaca dirvish :host github :repo "alexluigit/dirvish")
 ;;   (dirvish-override-dired-mode))
 
-
 (setup kanji-mode
   (:elpaca t)
   (:opt *km:kakasi-executable* (locate-file "kakasi.exe" exec-path)))
@@ -1217,7 +1307,7 @@ The ORDER can be used to deduce the feature context."
 
 (setup org-roam
   (:elpaca org-roam :host github :repo "org-roam/org-roam")
-  (:load-after org-journal)
+  (:load-after org-journal consult)
   (:option
    org-roam-db-location (file-truename "~/.emacs.d/org-roam.db")
    org-roam-directory (file-truename "~/.emacs.d/org-roam")
@@ -1233,6 +1323,7 @@ The ORDER can be used to deduce the feature context."
                                      :unnarrowed t
                                      :empty-lines-before 1)))
   (:global
+   "C-c n s" org-roam-search
    "C-c n f" org-roam-node-find
    "C-c n r" org-roam-node-random)
   (:with-map org-mode-map
@@ -1242,7 +1333,8 @@ The ORDER can be used to deduce the feature context."
      "C-c n o" org-id-get-create
      "C-c n t" org-roam-tag-add
      "C-c n a" org-roam-alias-add))
-  (with-eval-after-load 'org-roam
+  (:when-loaded
+  ;; (with-eval-after-load 'org-roam
     (require 'kanji-mode)
     (require 'cl-lib)
     (cl-defmethod org-roam-node-customslug ((node org-roam-node))
@@ -1283,8 +1375,41 @@ The ORDER can be used to deduce the feature context."
                           ("_$" . "")))                   ;; remove ending underscore
                  (slug (-reduce-from #'cl-replace (km:all->romaji (strip-nonspacing-marks title)) pairs)))
             (downcase slug))))))
-  (org-roam-db-autosync-mode)
-  (require 'org-roam-protocol))
+
+    (dolist (dir '("~/.emacs.d/org-roam"))
+      (unless (file-directory-p dir)
+        (make-directory dir)))
+    (org-roam-db-autosync-mode)
+    (require 'org-roam-protocol)
+
+    ;; https://org-roam.discourse.group/t/org-roam-search-with-consult-ripgrep-updated/3285/2
+    (defun org-roam-search-args ()
+      "Search org-roam directory using consult-ripgrep. With live-preview." 
+      (let ((consult-ripgrep-args "rg --null --ignore-case --type org --line-buffered --color=never --max-columns=500 --no-heading --line-number"))
+        (consult-ripgrep org-roam-directory)))
+
+    (defun headlong ()
+      "Make the current minibuffer completion exit when there is 1 candidate."
+      (add-hook 'after-change-functions
+                (lambda (&rest _)
+                  (let* ((all (completion-all-completions
+                               (minibuffer-contents)
+                               minibuffer-completion-table
+                               minibuffer-completion-predicate
+                               (max 0 (- (point) (minibuffer-prompt-end)))))
+                         (last (last all)))
+                    (when last (setcdr last nil))
+                    (when (and all (null (cdr all)))
+                      (delete-minibuffer-contents)
+                      (insert (car all))
+                      (exit-minibuffer))))
+                nil t))
+
+    (defun org-roam-search ()
+      (interactive)
+      (minibuffer-with-setup-hook #'headlong (funcall #'org-roam-search-args))))
+
+    ;; (global-set-key (kbd "C-c n s") 'org-roam-search))
 
 ;; javascript:location.href =
 ;;     'org-protocol://roam-ref?template=r&ref='
@@ -1312,7 +1437,7 @@ The ORDER can be used to deduce the feature context."
            org-journal-time-format "%R\n\n"
            org-journal-time-prefix "** ")
   (:global
-   "C-cj" org-journal-new-entry))
+   "C-c j" org-journal-new-entry))
 
 (setup org-download
   (:elpaca t)
@@ -1326,6 +1451,9 @@ The ORDER can be used to deduce the feature context."
 
 (which-key-mode 1)
 
+(global-set-key (kbd "C-x j") #'duplicate-dwim)
+
+;; https://blog.tomoya.dev/posts/a-new-wave-has-arrived-at-emacs/
 ;; https://a.conao3.com/blog/2024/7c7c265/
 ;; https://apribase.net/2024/07/27/modern-emacs-2024/
 ;; https://apribase.net/2024/05/29/emacs-elpaca-setup-el/
