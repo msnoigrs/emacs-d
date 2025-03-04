@@ -8,8 +8,8 @@
  package-enable-at-startup nil
  package-quickstart nil)
 
-(with-eval-after-load 'package
-  (setopt package-enable-at-startup nil))
+;; (with-eval-after-load 'package
+;;   (setopt package-enable-at-startup nil))
 
 ;; 自動生成ファイルを無効にする
 (setq make-backup-files nil)

@@ -102,7 +102,7 @@
 
 (setq native-comp-async-report-warnings-errors 'silent)
 
-(defvar elpaca-installer-version 0.8)
+(defvar elpaca-installer-version 0.9)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -205,16 +205,16 @@ The ORDER can be used to deduce the feature context."
         body))
   :documentation "Load the current feature after FEATURES.")
 
-(setup-define :autoload
-  (lambda (func)
-    (let ((fn (if (memq (car-safe func) '(quote function))
-                  (cadr func)
-                func)))
-      `(unless (fboundp (quote ,fn))
-         (autoload (function ,fn) ,(symbol-name (setup-get 'feature)) nil t))))
-  :documentation "Autoload COMMAND if not already bound."
-  :repeatable t
-  :signature '(FUNC ...))
+;; (setup-define :autoload
+;;   (lambda (func)
+;;     (let ((fn (if (memq (car-safe func) '(quote function))
+;;                   (cadr func)
+;;                 func)))
+;;       `(unless (fboundp (quote ,fn))
+;;          (autoload (function ,fn) ,(symbol-name (setup-get 'feature)) nil t))))
+;;   :documentation "Autoload COMMAND if not already bound."
+;;   :repeatable t
+;;   :signature '(FUNC ...))
 
 (setup migemo
   (:elpaca migemo :host github :repo "emacs-jp/migemo")
@@ -460,6 +460,7 @@ The ORDER can be used to deduce the feature context."
                                     :right-fringe-width 8))
   (spacious-padding-mode 1))
 
+;; Corfu 補完ポップアップ機能
 ;; https://www.grugrut.net/posts/202408192021/
 (setup corfu
   (:elpaca corfu :host github :repo "minad/corfu")
@@ -517,10 +518,36 @@ The ORDER can be used to deduce the feature context."
 
 (setup cape
   (:elpaca cape :host github :repo "minad/cape")
+  (:load-after tempel)
   (:option cape-dabbrev-min-length 2)
   (setq-default completion-at-point-functions
                 (append (default-value 'completion-at-point-functions)
-                        (list #'cape-dabbrev #'cape-file #'cape-abbrev))))
+                        (list #'cape-dabbrev #'cape-file #'cape-abbrev)))
+  (defun tempel-setup-capf(&optional arg)
+    (setq-local completion-at-point-functions
+                (list
+                 (cape-capf-noninterruptible
+                  (cape-capf-buster
+                   (cape-capf-properties
+                    (cape-capf-super
+                     (if arg
+                         arg
+                       (car completion-at-point-functions))
+                     #'tempel-complete
+                     #'cape-dabbrev
+                     #'cape-keyword
+                     #'cape-file)
+                    :sort t
+                    :exclusive 'no))))
+                cape-dabbrev-check-other-buffers nil))
+  (:with-hook prog-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook text-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook conf-mode-hook
+    (:hook tempel-setup-capf))
+  (:with-hook org-mode-hook
+    (:hook tempel-setup-capf)))
 
 (setup orderless
   (:elpaca orderless :host github :repo "oantolin/orderless")
@@ -591,46 +618,34 @@ The ORDER can be used to deduce the feature context."
   (unless (display-graphic-p)
     (corfu-terminal-mode +1)))
 
+;; run-hooks(change-major-mode-after-body-hook text-mode-hook outline-mode-hook org-mode-hook)
+
 ;; https://qiita.com/nobuyuki86/items/7c65456ad07b555dd67d
 
 (setup tempel
   (:elpaca tempel :host github :repo "minad/tempel")
   (:global
    "M-+" tempel-complete
-   "M-*" tempel-insert)
-  (defun tempel-setup-capf(&optional arg)
-    (setq-local completion-at-point-functions
-                (list
-                 (cape-capf-noninterruptible
-                  (cape-capf-buster
-                   (cape-capf-properties
-                    (cape-capf-super
-                     (if arg
-                         arg
-                       (car completion-at-point-functions))
-                     #'tempel-complete
-                     #'cape-dabbrev
-                     #'cape-keyword
-                     #'cape-file)
-                    :sort t
-                    :exclusive 'no))))
-                cape-dabbrev-check-other-buffers nil))
-  (:with-hook prog-mode-hook
-    (:hook tempel-setup-capf))
-  (:with-hook text-mode-hook
-    (:hook tempel-setup-capf))
-  (:with-hook conf-mode-hook
-    (:hook tempel-setup-capf))
-  (:with-hook org-mode-hook
-    (:hook tempel-setup-capf)))
+   "M-*" tempel-insert))
 
 (setup tempel-collection
-  (:elpaca tempel-collection :host github :repo "Crandel/tempel-collection"))
+  (:elpaca tempel-collection :host github :repo "Crandel/tempel-collection")
+  (:load-after tempel))
 
 (setup eglot-tempel
   (:elpaca eglot-tempel :host github :repo "fejfighter/eglot-tempel")
   (:load-after tempel eglot)
   (eglot-tempel-mode t))
+
+(setup yasnippet
+  (:elpaca yasnippet :host github :repo "joaotavora/yasnippet")
+  (:option yas-snippet-dirs
+           (list (expand-file-name (concat user-emacs-directory "snippets"))))
+  (yas-global-mode 1))
+
+(setup flymake
+  (:option flymake-run-in-place nil
+           temporary-file-directory "~/.emacs.d/tmp"))
 
 (setup flycheck
   (:elpaca flycheck :host github :repo "flycheck/flycheck")
@@ -700,20 +715,22 @@ The ORDER can be used to deduce the feature context."
 ;; https://qiita.com/akirak/items/11dafdf89e32d34f3fc9
 
 (setup eglot
+  (:elpaca eglot :host github :repo "joaotavora/eglot")
+  (:load-after yasnippet)
   (:with-mode html-mode
     (:hook eglot-ensure))
-  (:opt eglot-sync-connect 3
-        eglot-connect-timeout 30
-        eglot-autoshutdown t
-        eglot-send-changes-idle-time 0.5
-        eglot-events-buffer-size 0
-        eglot-report-progress nil
-        eglot-ignored-server-capabilities '(:documentHighlightProvider
-                                            :foldingRangeProvider)
+  (:option eglot-sync-connect 3
+           eglot-connect-timeout 30
+           eglot-autoshutdown t
+           eglot-send-changes-idle-time 0.5
+           eglot-events-buffer-size 0
+           eglot-report-progress nil
+           eglot-ignored-server-capabilities '(:documentHighlightProvider
+                                               :foldingRangeProvider)
         ;; NOTE We disable eglot-auto-display-help-buffer because :select t in
         ;;      its popup rule causes eglot to steal focus too often.
-        eglot-auto-display-help-buffer nil
-        eglot-report-progress nil)
+           eglot-auto-display-help-buffer nil
+           eglot-report-progress nil)
   (:when-loaded
     (dolist (pair '((svelte-mode . ("svelteserver" "--stdio"))
                     (css-mode . ("vscode-css-language-server" "--stdio"))
@@ -724,9 +741,10 @@ The ORDER can be used to deduce the feature context."
 
 (setup eglot-booster
   (:elpaca eglot-booster :host github :repo "jdtsmith/eglot-booster")
+  (:load-after eglot)
   (:with-hook eglot-managed-mode-hook
-    (:hook labmda ()
-           (eglot-booster-mode t))))
+    (:hook (lambda ()
+             (eglot-booster-mode t)))))
 
 (setup eglot-x
   (:elpaca eglot-x :host github :repo "nemethf/eglot-x")
@@ -1068,6 +1086,7 @@ The ORDER can be used to deduce the feature context."
   (:with-hook switch-buffer-functions
     (:hook my-recentf-track-visited-file)))
 
+
 ;; (setup pcre2el
 ;;   (:elpaca pcre2el :host github :repo "joddie/pcre2el"))
 ;; (setup counsel
@@ -1137,13 +1156,10 @@ The ORDER can be used to deduce the feature context."
            consult-project-function #'consult--default-project-function)
   (advice-add #'register-preview :override #'consult-register-window)
   (:when-loaded
-    ;; https://tam5917.hatenablog.com/entry/2022/02/05/202816
-    ;; カーソル下のシンボルを拾ってconsult-line発動
-    ;; (defun consult-line-symbol-at-point (&optional at-point)
-    ;;   (interactive "P")
-    ;;   (if at-point
-    ;;       (consult-line (thing-at-point 'symbol))
-    ;;     (consult-line)))
+    (defun consult-line-from-isearch ()
+      "Call `consult-line' with the search string from the last `isearch'."
+      (interactive)
+      (consult-line isearch-string))
 
     ;; consult--source-fileの公式実装では「現在バッファとして保持しているファイル」が
     ;; ファイル(recentf)の検索対象から除外されるので、
@@ -1184,7 +1200,6 @@ The ORDER can be used to deduce the feature context."
       (if (> arg 1) ;; C-u
           (consult-ripgrep default-directory search-term)
         (consult-ripgrep (my/project-root) search-term)))))
-    
 
 (setup consult-eglot
   (:elpaca t)
@@ -1284,26 +1299,247 @@ The ORDER can be used to deduce the feature context."
   (:elpaca t)
   (:opt *km:kakasi-executable* (locate-file "kakasi.exe" exec-path)))
 
+(setup engrave-faces
+  (:elpaca t))
+
+(setup latex-mode
+    (:option latex-run-command "lualatex -shell-escape -interaction nonstopmode"))
+
 ;; Org-Mode
 
 (setup org
+  (:elpaca org :host github :repo "bzg/org-mode")
   (:global
    "C-c l" org-store-link
    "C-c c" org-capture
    "C-c a" org-agenda)
   (:option org-directory "~/.emacs.d/orgdocs"
-           orgx1-default-notes-file (concat org-directory "/notes.org")
-           org-agenda-files '("~/.emacs.d/orgdocs")
+           org-default-notes-file (concat org-directory "/notes.org")
+           org-agenda-files '("~/.emacs.d/org-roam/ref")
            org-refile-targets '((org-agenda-files :maxlevel . 3))
            org-return-follows-link t
-           org-mouse-1-follows-link t)
+           org-mouse-1-follows-link t
+           org-tag-alist '(("Go" . ?g) ("AWS" . ?a) ("S3" . ?s) ("lambda" . ?l) ("Emacs" . ?e) ("python" . ?p) ("Rust" . ?r) ("blender" . ?b) ("Music" . ?m) ("plamo" . ?k))
+           ;; デフォルトはセクション番号なし
+           ;; 番号出したい場合は 全部 #+OPTIONS: num:t や トップレベルのみ #+OPTIONS: num:1
+           ;; プロパティ UNNUMBERD: t とするとそのセクションだけ番号が出力されない
+           org-export-with-section-numbers nil
+           org-export-time-stamp-file nil
+           org-export-with-email nil
+           org-export-with-creator nil
+           org-export-with-toc nil
+           org-export-with-sub-superscripts nil
+           org-export-default-language "ja"
+           org-latex-compiler "lualatex"
+           org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f"
+                                   "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"
+                                   "%latex -shell-escape -interaction nonstopmode -output-directory %o %f")
+           org-latex-default-class "ltjsarticle-simple"
+           org-latex-hyperref-template "\\hypersetup{\n colorlinks=true,\n linkcolor=lightb,\n setpagesize=false,\n pdfauthor={%a},\n pdftitle={%t},\n pdfkeywords={%k},
+ pdfsubject={%d},\n pdfcreator={%c}, \n pdflang={%L}}\n"
+           org-latex-text-markup-alist '((bold . "{\\gtfamily\\bfseries %s}")
+									     (code . verb)
+									     (italic . "{\\itshape\\gtfamily %s}")
+									     (strike-through . "\\sout{%s}")
+									     (underline . "\\uline{%s}")
+									     (verbatim . protectedtexttt))
+           org-latex-default-packages-alist '(("" "luatexja" t)
+                                              ("" "luatexja-otf" t)
+                                              ("match" "luatexja-fontspec" t)
+                                              ("haranoaji,bold" "luatexja-preset" t)
+                                              ;;("" "float" nil)
+                                              ("" "wrapfig" nil)
+                                              ("normalem" "ulem" t)
+                                              ;;("" "textcomp" t)
+                                              ;;("" "marvosym" t)
+                                              ;;("" "wasysym" t)
+                                              ;;("" "amssymb" t)
+                                              ("" "capt-of" t)
+                                              ("luatex,pdfencoding=auto" "hyperref" t)
+                                              ;;("" "amstext" nil)
+                                              ("" "array" nil)
+                                              ("" "paralist" nil)
+                                              ("" "xcolor" t)
+                                              "\\tolerance=1000"
+                                              "\\definecolor{lightb}{RGB}{217,224,250}"))
+  ;; (:when-loaded
+  ;;   (require 'org-tempo)) ;; <e <s tab でbegen endの対に補完
+  (:also-load org-tempo) ;; <e <s tab でbegen endの対に補完
+  (:also-load ox-rst)
   (:hook turn-off-auto-fill
          turn-on-visual-line-mode
          visual-fill-column-mode
-         adaptive-wrap-prefix-mode))
+         adaptive-wrap-prefix-mode)
+
+  (with-eval-after-load 'ox
+    ;; "verbatim" → "Verbatim" 置換
+    (defun my-org-latex-filter-fancyvrb (text backend _info)
+      "Convert begin/end{verbatim} to begin/end{Verbatim}.
+  Allows use of the fancyvrb latex package."
+      (when (or (org-export-derived-backend-p backend 'beamer)
+                (org-export-derived-backend-p backend 'latex))
+        (replace-regexp-in-string
+         "\\\\\\(begin\\|end\\){verbatim}"
+         "\\\\\\1{Verbatim}" text)))
+    (add-to-list 'org-export-filter-final-output-functions
+                 'my-org-latex-filter-fancyvrb))
+
+  (with-eval-after-load 'ox-latex
+    (setq org-latex-classes nil)
+    (add-to-list 'org-latex-classes
+			     '("ltjsarticle-simple"
+			       "\\documentclass{ltjsarticle}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{geometry}
+\\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
+\\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
+\\usepackage{fancyhdr}
+\\makeatletter
+\\renewcommand{\\maketitle}{%
+  \\newpage
+  \\begin{flushleft}%
+    \\let\\footnote\\thanks
+        {\\sffamily\\bfseries\\LARGE\\@title\\par}%
+  \\end{flushleft}%
+  \\begin{flushright}%
+    \\vskip -3truemm%
+    {\\bfseries\\@author\\par}%
+    \\vskip -1truemm%
+    {\\bfseries\\@date}%
+  \\end{flushright}%
+  \\vskip 5truemm%
+}
+\\makeatother
+\\pagestyle{fancy}
+\\makeatletter
+\\lhead{}
+\\chead{}
+\\rhead{}
+\\lfoot{}
+\\makeatother
+\\cfoot{}
+\\rfoot{{\\rmfamily\\thepage}}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0pt}
+[EXTRA]
+"
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                   ("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+                   ))
+
+    (add-to-list 'org-latex-classes
+			     '("ltjsarticle"
+			       "\\documentclass{ltjsarticle}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{geometry}
+\\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
+\\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
+\\usepackage{fancyhdr}
+\\makeatletter
+\\renewcommand{\\maketitle}{%
+  \\newpage
+  \\begin{flushleft}%
+    \\let\\footnote\\thanks
+        {\\sffamily\\bfseries\\LARGE\\@title\\par}%
+  \\end{flushleft}%
+  \\begin{flushright}%
+    \\vskip -3truemm%
+    {\\bfseries\\@author\\par}%
+    \\vskip -1truemm%
+    {\\bfseries\\@date}%
+  \\end{flushright}%
+  \\vskip 5truemm%
+}
+\\makeatother
+\\pagestyle{fancy}
+\\makeatletter
+\\lhead{}
+\\chead{}
+\\rhead{}
+\\lfoot{{\\small© \\@author}}
+\\makeatother
+\\cfoot{}
+\\rfoot{{\\rmfamily\\thepage}}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0.5pt}
+[EXTRA]
+"
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                   ("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+                   ))
+
+    (add-to-list 'org-latex-classes
+			     '("ltjsarticle-plane"
+			       "\\documentclass{ltjsarticle}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{geometry}
+\\geometry{left=25truemm,right=25truemm,top=22truemm,bottom=22truemm}
+\\setmainfont[Ligatures=TeX]{RobotoSerif}
+\\setsansfont[Ligatures=TeX]{Roboto}
+\\setmonofont[Ligatures=TeXReset]{inconsolata}
+\\setmonojfont{Cica}
+\\renewcommand{\\headfont}{\\sffamily\\gtfamily\\bfseries}
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}
+\\lfoot{}
+\\cfoot{}
+\\rfoot{}
+\\renewcommand{\\headrulewidth}{0pt}
+\\renewcommand{\\footrulewidth}{0pt}
+[EXTRA]
+"
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                   ("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+                   ))
+
+    (add-to-list 'org-latex-classes
+			     '("ltjsbook"
+			       "\\documentclass{ltjsbook}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+[EXTRA]
+"
+                   ("\\part{%s}" . "\\part*{%s}")
+                   ("\\chapter{%s}" . "\\chapter*{%s}")
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   )))
+
+  ;; https://www.reddit.com/r/emacs/comments/1bnhz24/bug_nonexistent_agenda_file_s/
+  ;; (defun my-org-agenda-prepare-buffers-advice (orig-func &rest args)
+  ;;   "Advice function to modify `org-agenda-prepare-buffers'. It filters the FILES argument to ensure only agenda files are processed."
+  ;;   (let ((files (if (listp (car args)) (car args) nil)))
+  ;;     (when files
+  ;;       (setq files (seq-filter #'(lambda (file) (member file org-agenda-files)) files)))
+  ;;     (apply orig-func (list files))))
+
+  ;; (advice-add 'org-agenda-prepare-buffers :around #'my-org-agenda-prepare-buffers-advice)
+  )
 
 ;; https://ueeda.sakura.ne.jp/misc/cheat_sheet_for_org-journal.html
-;; https://ueeda.sakura.ne.jp/misc/ways_for_howm_to_survive.html
+
+;; https://futurismo.biz/using-org-roam-one-year-2022/
 
 (setup org-roam
   (:elpaca org-roam :host github :repo "org-roam/org-roam")
@@ -1321,7 +1557,9 @@ The ORDER can be used to deduce the feature context."
                                                             ":PROPERTIES:\n:CATEGORY: ref\n:END:\n#+title: ${title}\n"
                                                             ("${title}"))
                                      :unnarrowed t
-                                     :empty-lines-before 1)))
+                                     :empty-lines-before 1))
+   org-roam-dailies-capture-templates '(("d" "default" entry "* %<%H:%M> %^{Topic}\n"
+                                         :if-new (file+head "%<%Y%m%d>-daily.org" "#+title: %<%Y%m%d> Daily\n\n"))))
   (:global
    "C-c n s" org-roam-search
    "C-c n f" org-roam-node-find
@@ -1330,9 +1568,9 @@ The ORDER can be used to deduce the feature context."
     (:bind
      "C-c n i" org-roam-node-insert
      "C-c n l" org-roam-buffer-toggle
-     "C-c n o" org-id-get-create
+     "C-c n o" org-id-get-create ;; 見出しにもIDを振る
      "C-c n t" org-roam-tag-add
-     "C-c n a" org-roam-alias-add))
+     "C-c n a" org-roam-alias-add)) ;; タイトルに複数のサブタイトルを付ける
   (:when-loaded
   ;; (with-eval-after-load 'org-roam
     (require 'kanji-mode)
@@ -1422,8 +1660,16 @@ The ORDER can be used to deduce the feature context."
 (setup org-roam-timestamps
   (:elpaca org-roam-timestamps :host github :repo "tefkah/org-roam-timestamps")
   (:option org-roam-timestamps-parent-file t)
-  (with-eval-after-load 'org-roam
-    (org-roam-timestamps-mode)))
+  (:with-hook org-mode-hook
+    (:hook (lambda ()
+             (org-roam-timestamps-mode 1))))
+  ;; マイナーモードをoffにするタイミングがわからない
+  ;; (defun org-roam-leave-mode-function ()
+  ;;   (when (eq major-mode 'org-mode)
+  ;;     (org-roam-timestamps-mode -1)))
+  ;; (:with-hook change-major-mode-hook
+  ;;   (:hook org-roam-leave-mode-function))
+  (org-roam-timestamps-mode -1))
 
 (setup org-journal
   (:elpaca t)
@@ -1448,6 +1694,34 @@ The ORDER can be used to deduce the feature context."
      "s-y" org-download-yank))
   (:with-hook dired-mode-hook
     (:hook org-download-enable)))
+
+;; (setup dash
+;;   (:elpaca dash :host github :repo "magnars/dash.el"))
+
+;; (setup delve
+;;   (:elpaca delve :host github :repo "publicimageltd/delve")
+;;   (:load-after dash))
+
+;; (setup delve-show
+;;   (:elpaca delve-show :host github :repo "natask/delve-show"))
+
+;; (setup sexp-string
+;;   (:elpaca sexp-string :host github :repo "natask/sexp-string"))
+
+;; (setup org-roam-search
+;;   (:elpaca org-roam-search :host github :repo "natask/org-roam-search")
+;;   (:load-after sexp-string delve-show)
+;;   )
+
+;; (setup org-roam-ql
+;;   (:elpaca t)
+;;   (:load-after org-roam)
+;;   (:with-map org-roam-mode-map
+;;     (:bind
+;;      "v" org-roam-ql-buffer-dispatch))
+;;   (:with-map minibuffer-mode-map
+;;     (:bind
+;;      "C-c n i" org-roam-ql-insert-node-title)))
 
 (which-key-mode 1)
 
@@ -1478,7 +1752,6 @@ The ORDER can be used to deduce the feature context."
     (server-start)))
 
 (cd "~/")
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1490,4 +1763,22 @@ The ORDER can be used to deduce the feature context."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(fringe ((t :background "#fbf7f0")))
+ '(header-line ((t :box (:line-width 4 :color "#efe9dd" :style nil))))
+ '(header-line-highlight ((t :box (:color "#000000"))))
+ '(keycast-key ((t)))
+ '(line-number ((t :background "#fbf7f0")))
+ '(mode-line ((t :box (:line-width 4 :color "#cab9b2" :style nil))))
+ '(mode-line-active ((t :box (:line-width 4 :color "#cab9b2" :style nil))))
+ '(mode-line-highlight ((t :box (:color "#000000"))))
+ '(mode-line-inactive ((t :box (:line-width 4 :color "#dfd9cf" :style nil))))
+ '(tab-bar-tab ((t :box (:line-width 4 :color "#fbf7f0" :style nil))))
+ '(tab-bar-tab-inactive ((t :box (:line-width 4 :color "#c8b8b2" :style nil))))
+ '(tab-line-tab ((t)))
+ '(tab-line-tab-active ((t)))
+ '(tab-line-tab-current ((t)))
+ '(tab-line-tab-inactive ((t)))
+ '(vertical-border ((t :background "#fbf7f0" :foreground "#fbf7f0")))
+ '(window-divider ((t nil)))
+ '(window-divider-first-pixel ((t nil)))
+ '(window-divider-last-pixel ((t nil))))
